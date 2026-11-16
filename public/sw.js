@@ -7,8 +7,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(d.title, {
       body: d.body,
-      icon: "/icon.svg",
-      badge: "/icon.svg",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
       tag: "telsiz-msg",
       renotify: true,
     })

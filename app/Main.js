@@ -16,6 +16,31 @@ export default function Main({ user, onLogout }) {
   const [info, setInfo] = useState("");
   const [active, setActive] = useState(null);
   const [, setTick] = useState(0);
+  const [outgoing, setOutgoing] = useState([]); // gönderilmiş, bekleyen istekler
+
+  // iOS/Chrome: ilk dokunuşta sesi "aç", sonra gelen sesli mesaj otomatik çalabilsin
+  useEffect(() => {
+    const unlock = () => {
+      const a = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=");
+      a.play().catch(() => {});
+      window.removeEventListener("pointerdown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock);
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, "requests"), where("from", "==", user.uid), where("status", "==", "pending"));
+    return onSnapshot(q, async (snap) => {
+      const list = await Promise.all(
+        snap.docs.map(async (d) => {
+          const u = await getDoc(doc(db, "users", d.data().to));
+          return { id: d.id, name: u.data()?.name || u.data()?.email || "Biri" };
+        })
+      );
+      setOutgoing(list);
+    });
+  }, [user.uid]);
   const [notif, setNotif] = useState("default");
 
   useEffect(() => {
@@ -72,21 +97,31 @@ export default function Main({ user, onLogout }) {
     const e = email.trim().toLowerCase();
     if (!e) return;
     if (e === (user.email || "").toLowerCase()) return setInfo("Bu sensin 🙂");
-    const snap = await getDocs(query(collection(db, "users"), where("email", "==", e), limit(1)));
-    if (snap.empty) return setInfo("Bu e-postayla kayıtlı kullanıcı yok (önce uygulamaya girmesi lazım).");
-    const target = snap.docs[0].id;
-    await setDoc(doc(db, "requests", `${user.uid}_${target}`), {
-      from: user.uid, to: target, status: "pending", createdAt: serverTimestamp(),
-    });
-    setEmail("");
-    setInfo("İstek gönderildi ✅");
+    try {
+      const snap = await getDocs(query(collection(db, "users"), where("email", "==", e), limit(1)));
+      if (snap.empty) return setInfo("Bu e-postayla kayıtlı kullanıcı yok. Önce uygulamaya Google ile girmesi lazım.");
+      const target = snap.docs[0].id;
+      if (friends.some((f) => f.uid === target)) return setInfo("Zaten arkadaşsınız.");
+      if (incoming.some((r) => r.from === target)) return setInfo("Bu kişi sana zaten istek göndermiş, soldan Kabul et.");
+      await setDoc(doc(db, "requests", `${user.uid}_${target}`), {
+        from: user.uid, to: target, status: "pending", createdAt: serverTimestamp(),
+      });
+      setEmail("");
+      setInfo("İstek gönderildi ✅");
+    } catch (err) {
+      setInfo("Hata: " + (err.code || err.message));
+    }
   }
 
   async function accept(r) {
-    await setDoc(doc(db, "chats", chatIdOf(user.uid, r.from)), {
-      members: [user.uid, r.from], createdAt: serverTimestamp(),
-    });
-    await updateDoc(doc(db, "requests", r.id), { status: "accepted" });
+    try {
+      await setDoc(doc(db, "chats", chatIdOf(user.uid, r.from)), {
+        members: [user.uid, r.from], createdAt: serverTimestamp(),
+      });
+      await updateDoc(doc(db, "requests", r.id), { status: "accepted" });
+    } catch (err) {
+      setInfo("Hata: " + (err.code || err.message));
+    }
   }
 
   return (
@@ -110,6 +145,12 @@ export default function Main({ user, onLogout }) {
             <div className="row" key={r.id}>
               <span>{r.fromName} arkadaş olmak istiyor</span>
               <button className="primary" onClick={() => accept(r)}>Kabul</button>
+            </div>
+          ))}
+          {outgoing.map((r) => (
+            <div className="row" key={r.id}>
+              <span>⏳ {r.name}</span>
+              <small>istek bekliyor</small>
             </div>
           ))}
           {friends.length === 0 && <p className="muted" style={{ padding: 8 }}>Henüz arkadaş yok. Aşağıdan e-posta ile ekle.</p>}
