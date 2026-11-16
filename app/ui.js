@@ -312,10 +312,6 @@ export function Splash() {
   }, []);
 
   useEffect(() => {
-    if (phase === "credit") {
-      const a = setTimeout(() => setPhase("out"), 2900);
-      return () => clearTimeout(a);
-    }
     if (phase === "out") {
       const b = setTimeout(() => setPhase("off"), 700);
       return () => clearTimeout(b);
@@ -342,6 +338,7 @@ export function Splash() {
             <div className="splash-rule" />
             {phase !== "show" && <p className="splash-credit"><TypedCredit start={150} /></p>}
             {phase !== "show" && <div className="eq" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>}
+            {phase !== "show" && <button type="button" className="continue-btn" onClick={() => setPhase("out")}>{t("continue")}</button>}
           </>
         )}
       </div>
