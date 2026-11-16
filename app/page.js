@@ -68,11 +68,11 @@ export default function Page() {
       <main className="login">
         <p className="credit-pill"><Logo size={20} /> {t("credit")}</p>
         <div className="login-box">
-          <Logo size={44} />
-          <div>
+          <div className="brand">
+            <Logo size={48} />
             <h1>Telsiz</h1>
-            <p>{t("tagline")}</p>
           </div>
+          <p>{t("tagline")}</p>
           <button className="btn-google" onClick={login}>
             <GoogleG /> {t("googleLogin")}
           </button>
