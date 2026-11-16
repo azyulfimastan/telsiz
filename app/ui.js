@@ -235,19 +235,54 @@ function TypedCredit({ start }) {
   );
 }
 
-// Uygulama açılışında kısa karşılama ekranı (oturum başına bir kez)
+// Uygulama açılışı: ilk açılışta önce dil seçilir, sonra karşılama yazısı çıkar (oturum başına bir kez)
 export function Splash() {
+  const { setLang } = useI18n();
   const [phase, setPhase] = useState("off");
+
   useEffect(() => {
-    let seen = false;
-    try { seen = sessionStorage.getItem("splash") === "1"; sessionStorage.setItem("splash", "1"); } catch {}
-    if (seen) return;
-    setPhase("on");
+    let chosen = false, seen = false;
+    try {
+      chosen = localStorage.getItem("langChosen") === "1";
+      seen = sessionStorage.getItem("splash") === "1";
+      sessionStorage.setItem("splash", "1");
+    } catch {}
+    if (!chosen) return setPhase("pick");
+    if (!seen) setPhase("on");
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "on") return;
     const a = setTimeout(() => setPhase("out"), 5200);
     const b = setTimeout(() => setPhase("off"), 5800);
     return () => { clearTimeout(a); clearTimeout(b); };
-  }, []);
+  }, [phase]);
+
+  const choose = (code) => {
+    setLang(code);
+    try { localStorage.setItem("langChosen", "1"); } catch {}
+    setPhase("on");
+  };
+
   if (phase === "off") return null;
+  if (phase === "pick") {
+    return (
+      <div className="splash">
+        <div className="splash-in">
+          <div className="splash-logo"><Logo size={84} /></div>
+          <h1 className="display splash-title" style={{ fontSize: "clamp(36px, 10vw, 56px)" }}>Telsiz</h1>
+          <div className="splash-rule" style={{ animation: "none", transform: "none" }} />
+          <div className="lang-pick">
+            {LANGS.map((l) => (
+              <button key={l.code} className="lang-pick-btn" onClick={() => choose(l.code)}>
+                {l.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
       <div className="splash-in">

@@ -325,3 +325,11 @@ body { transition: background .2s ease, color .2s ease; }
   .tl { animation: none; opacity: 1; transform: none; filter: none; }
   .splash-rule { animation: none; transform: none; }
 }
+
+.lang-pick { display: flex; flex-direction: column; gap: 12px; width: min(280px, 80vw); margin-top: 6px; }
+.lang-pick-btn {
+  padding: 14px 18px; border-radius: 14px; font-size: 18px; font-weight: 600; color: #fff;
+  background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .45);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); -webkit-tap-highlight-color: transparent;
+}
+.lang-pick-btn:hover, .lang-pick-btn:active { background: rgba(255, 255, 255, .34); }
