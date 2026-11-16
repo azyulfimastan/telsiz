@@ -333,6 +333,8 @@ function Chat({ me, friend, onBack, onRead }) {
   const limitTimer = useRef(null);
   const first = useRef(true);
   const pressed = useRef(false);
+  const lockedRef = useRef(false);
+  const [locked, setLocked] = useState(false);
   const liveRef = useRef(null);
   const statusRef = useRef("offline");
 
@@ -404,11 +406,26 @@ function Chat({ me, friend, onBack, onRead }) {
     }
   }
 
-  async function startRec(e) {
+  async function startRec(e, lock = false) {
     e.preventDefault();
-    e.currentTarget.setPointerCapture?.(e.pointerId);
+    if (lockedRef.current) return stopRec(); // kilitliyken dokununca bitir
+    if (recorder.current?.state === "recording") return;
     setErr("");
     pressed.current = true;
+    lockedRef.current = lock;
+    setLocked(lock);
+    if (!lock) {
+      // Bırakma olayı nerede olursa olsun yakala (parmak düğmenin dışına kaysa bile)
+      const release = () => {
+        ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"].forEach((ev) =>
+          window.removeEventListener(ev, release)
+        );
+        if (!lockedRef.current) stopRec();
+      };
+      ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"].forEach((ev) =>
+        window.addEventListener(ev, release)
+      );
+    }
     setLiveState("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -448,7 +465,7 @@ function Chat({ me, friend, onBack, onRead }) {
       startedAt.current = Date.now();
       mr.start();
       setRec(true);
-      limitTimer.current = setTimeout(stopRec, 60000);
+      limitTimer.current = setTimeout(stopRec, lock ? 300000 : 60000);
       // Arkadaş çevrimiçiyse sesi canlı yolla
       if (liveSupported() && statusRef.current !== "offline") {
         startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
@@ -465,6 +482,8 @@ function Chat({ me, friend, onBack, onRead }) {
 
   function stopRec() {
     pressed.current = false;
+    lockedRef.current = false;
+    setLocked(false);
     clearTimeout(limitTimer.current);
     if (recorder.current && recorder.current.state === "recording") recorder.current.stop();
     setRec(false);
@@ -531,19 +550,29 @@ function Chat({ me, friend, onBack, onRead }) {
           )}
         </form>
         <div className="ptt-wrap">
-          <button
+          <div className="ptt-row">
+            <button
               type="button"
-              className={"ptt" + (rec ? " rec" : "")}
-              onPointerDown={startRec}
-              onPointerUp={stopRec}
-              onPointerCancel={stopRec}
+              className={"ptt" + (rec && !locked ? " rec" : "")}
+              onPointerDown={(e) => startRec(e, false)}
               onContextMenu={(e) => e.preventDefault()}
               aria-label={t("holdToTalk")}
               title={t("holdToTalk")}
             >
               <Icon name="mic" size={32} />
             </button>
+            <button
+              type="button"
+              className={"lock-btn" + (locked ? " on" : "")}
+              onClick={(e) => (locked ? stopRec() : startRec(e, true))}
+              aria-label={locked ? t("stopLock") : t("lockTalk")}
+              title={locked ? t("stopLock") : t("lockTalk")}
+            >
+              <Icon name={locked ? "stop" : "lock"} size={22} />
+            </button>
+          </div>
           {!rec && <p className="hint">{t("hint")}</p>}
+          {rec && locked && <p className="hint">{t("lockedHint")}</p>}
         </div>
       </div>
     </>

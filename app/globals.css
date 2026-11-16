@@ -164,3 +164,9 @@ body.talking, body.talking * { user-select: none !important; -webkit-user-select
 .head-text .title { flex: none; }
 .live-banner { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--accent); color: var(--text); font-weight: 500; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
 .live-banner .rec-dot { background: var(--accent); }
+
+.ptt-row { display: flex; align-items: center; justify-content: center; gap: 22px; }
+.lock-btn { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); -webkit-tap-highlight-color: transparent; }
+.lock-btn:hover { background: #243040; }
+.lock-btn.on { background: var(--danger); color: #fff; border-color: var(--danger); animation: ring 1.2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .lock-btn.on { animation: none; } }

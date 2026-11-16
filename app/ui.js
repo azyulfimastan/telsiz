@@ -4,6 +4,8 @@ import { LANGS, useI18n } from "@/lib/i18n";
 
 const P = {
   mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
+  lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+  stop: <rect x="7" y="7" width="10" height="10" rx="2" />,
   send: <path d="M5 12h14M13 6l6 6-6 6" />,
   bell: <><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" /><path d="M10 19a2 2 0 0 0 4 0" /></>,
   bellOff: <><path d="M6 9a6 6 0 0 1 9.5-4.8M18 9c0 3 .8 4.6 1.4 5.4M4 15s2-1 2-6M10 19a2 2 0 0 0 4 0M3 3l18 18" /></>,
