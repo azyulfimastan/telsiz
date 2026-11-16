@@ -15,7 +15,7 @@ export const metadata = {
   appleWebApp: { capable: true, title: "Telsiz", statusBarStyle: "black-translucent" },
 };
 
-export const viewport = { themeColor: "#5b6cff" };
+export const viewport = { themeColor: "#5b6cff", viewportFit: "cover", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }) {
   return (

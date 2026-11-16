@@ -238,3 +238,9 @@ body { transition: background .2s ease, color .2s ease; }
 .hint.diag { max-width: 340px; font-weight: 500; }
 .hint.diag.ok { color: #16a34a; }
 .hint.diag.warn { color: var(--err-ink); }
+
+/* iPhone çentik / durum çubuğu ve alt çubuk */
+.side-head, .chat-head { height: calc(64px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); padding-left: calc(14px + env(safe-area-inset-left)); padding-right: calc(14px + env(safe-area-inset-right)); }
+.login { padding-top: calc(24px + env(safe-area-inset-top)); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.add { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.live-banner { top: calc(12px + env(safe-area-inset-top)); }
