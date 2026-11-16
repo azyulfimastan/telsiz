@@ -427,3 +427,5 @@ html { background: var(--grad-b, #6a63f5); }
 .splash-langs .pick-hint span { opacity: .9; }
 .splash-langs .pick-hint { gap: 3px; font-size: 16px; font-weight: 500; }
 .splash-langs .pick-hint span { opacity: 1; font-size: 16px; font-weight: 500; }
+.splash-langs .pick-hint { gap: 4px; }
+.splash-langs .pick-hint span { font-size: 21px; font-weight: 700; text-shadow: 0 2px 12px rgba(120, 10, 70, .35); }
