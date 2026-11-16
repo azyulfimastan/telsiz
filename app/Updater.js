@@ -17,15 +17,24 @@ export default function Updater() {
         const r = await fetch("/api/version?t=" + Date.now(), { cache: "no-store" });
         const { v } = await r.json();
         if (!alive || !v || v === CURRENT) return;
-        if (resume && !document.body.classList.contains("talking")) location.reload();
+        const typing = document.activeElement && ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) && document.activeElement.value;
+        if (!document.body.classList.contains("talking") && !typing) location.reload();
         else setStale(true);
       } catch {}
     };
     const onVis = () => { if (document.visibilityState === "visible") check(true); };
+    const onBack = () => check(true);
     document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onBack);
+    window.addEventListener("pageshow", onBack);
+    window.addEventListener("online", onBack);
     check(true);
-    const id = setInterval(() => check(false), 120000);
-    return () => { alive = false; document.removeEventListener("visibilitychange", onVis); clearInterval(id); };
+    const id = setInterval(() => { if (document.visibilityState === "visible") check(false); }, 15000);
+    return () => {
+      alive = false; clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onBack); window.removeEventListener("pageshow", onBack); window.removeEventListener("online", onBack);
+    };
   }, []);
 
   if (!stale) return null;
