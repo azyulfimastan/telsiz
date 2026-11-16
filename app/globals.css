@@ -515,3 +515,6 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .credit-card { max-width: 100%; flex-wrap: wrap; }
 .side-head, .chat-head { padding-right: calc(104px + env(safe-area-inset-right)); }
 .side-head .who { min-width: 0; }
+.vm-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; animation: vmSpin .7s linear infinite; }
+@keyframes vmSpin { to { transform: rotate(360deg); } }
+.older-btn { align-self: center; margin: 4px 0 10px; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); }

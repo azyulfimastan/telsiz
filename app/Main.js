@@ -414,6 +414,8 @@ function Chat({ me, friend, onBack, onRead }) {
   const chatId = chatIdOf(me.uid, friend.uid);
   const [msgs, setMsgs] = useState([]);
   const [ready, setReady] = useState(false);
+  const [lim, setLim] = useState(60);
+  const olderRef = useRef(false);
   const [text, setText] = useState("");
   const [rec, setRec] = useState(false);
   const [sec, setSec] = useState(0);
@@ -451,6 +453,15 @@ function Chat({ me, friend, onBack, onRead }) {
   const seen = presence?.lastSeen?.toMillis?.() || 0;
   const status = !seen || now - seen > 70000 ? "offline" : presence?.room === chatId ? "room" : "online";
   statusRef.current = status;
+  // Ses ayrı belgede saklanır; eski mesajlarda mesajın içindedir
+  const loadAudio = async (id, m) => {
+    if (m.audio) return m.audio;
+    try {
+      const d = await getDoc(doc(db, "chats", chatId, "audio", id));
+      return d.data()?.data || "";
+    } catch { return ""; }
+  };
+
   const lastSeenText = () => {
     if (!seen) return "";
     const d = new Date(seen), n = new Date(), y = new Date(n.getTime() - 86400000);
@@ -464,7 +475,7 @@ function Chat({ me, friend, onBack, onRead }) {
 
   useEffect(() => {
     first.current = true;
-    const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "desc"), limit(150));
+    const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "desc"), limit(lim));
     return onSnapshot(q, (snap) => {
       setMsgs(snap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse());
       setReady(true);
@@ -472,14 +483,14 @@ function Chat({ me, friend, onBack, onRead }) {
       if (!first.current) {
         snap.docChanges().forEach((c) => {
           const m = c.doc.data();
-          if (c.type === "added" && m.from !== me.uid && m.type === "voice" && m.audio && !m.live) {
-            new Audio(m.audio).play().catch(() => {});
+          if (c.type === "added" && m.from !== me.uid && m.type === "voice" && !m.live) {
+            loadAudio(c.doc.id, m).then((u) => u && new Audio(u).play().catch(() => {}));
           }
         });
       }
       first.current = false;
     });
-  }, [chatId, me.uid]);
+  }, [chatId, me.uid, lim]);
 
   // Karşı tarafın okuma zamanı (okundu işareti için)
   useEffect(
@@ -489,7 +500,8 @@ function Chat({ me, friend, onBack, onRead }) {
 
   // Açık sohbette gelen mesajları okundu say: sayaç sıfırlanır, karşı taraf okundu işaretini görür
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: scrolled.current ? "smooth" : "auto", block: "end" });
+    if (olderRef.current) olderRef.current = false;
+    else endRef.current?.scrollIntoView({ behavior: scrolled.current ? "smooth" : "auto", block: "end" });
     if (msgs.length) scrolled.current = true;
     onRead?.();
     const mark = () => {
@@ -628,8 +640,10 @@ function Chat({ me, friend, onBack, onRead }) {
           fr.readAsDataURL(blob);
         });
         try {
-          await addDoc(collection(db, "chats", chatId, "messages"), {
-            from: me.uid, type: "voice", audio, createdAt: serverTimestamp(),
+          const mref = doc(collection(db, "chats", chatId, "messages"));
+          await setDoc(doc(db, "chats", chatId, "audio", mref.id), { from: me.uid, data: audio, createdAt: serverTimestamp() });
+          await setDoc(mref, {
+            from: me.uid, type: "voice", hasAudio: true, dur: Math.round((Date.now() - startedAt.current) / 100) / 10, createdAt: serverTimestamp(),
           });
           afterSend("voice");
         } catch (er) {
@@ -673,7 +687,10 @@ function Chat({ me, friend, onBack, onRead }) {
   async function removeMsg() {
     const id = delId;
     setDelId(null);
-    try { await deleteDoc(doc(db, "chats", chatId, "messages", id)); }
+    try {
+      await deleteDoc(doc(db, "chats", chatId, "messages", id));
+      deleteDoc(doc(db, "chats", chatId, "audio", id)).catch(() => {});
+    }
     catch (er) { setErr(t("delFail", { e: er.code || er.message })); }
   }
 
@@ -694,6 +711,9 @@ function Chat({ me, friend, onBack, onRead }) {
       </header>
 
       <div className="msgs">
+        {ready && msgs.length >= lim && (
+          <button type="button" className="older-btn" onClick={() => { olderRef.current = true; setLim((n) => n + 60); }}>{t("older")}</button>
+        )}
         {!ready && (
           <div className="sk-msgs" aria-hidden="true">
             <i className="sk sk-b l" style={{ width: "52%" }} /><i className="sk sk-b r" style={{ width: "38%" }} /><i className="sk sk-b l" style={{ width: "64%" }} /><i className="sk sk-b r" style={{ width: "46%" }} />
@@ -716,7 +736,7 @@ function Chat({ me, friend, onBack, onRead }) {
             onContextMenu={(e) => e.preventDefault()}
             onClickCapture={(e) => { if (longFired.current) { e.preventDefault(); e.stopPropagation(); longFired.current = false; } }}
           >
-            {m.type === "voice" ? <VoiceMsg src={m.audio} id={m.id} /> : m.text}
+            {m.type === "voice" ? <VoiceMsg src={m.audio} id={m.id} dur={m.dur} load={() => loadAudio(m.id, m)} /> : m.text}
             <span className="time">
               {clock(m)}
               {m.from === me.uid && (() => {

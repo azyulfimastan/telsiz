@@ -95,12 +95,14 @@ const fmt = (s) => {
 };
 
 // Ses mesajı oynatıcı: oynat/duraklat, dalga biçimi, süre
-export function VoiceMsg({ src, id = "x" }) {
+export function VoiceMsg({ src, id = "x", dur: knownDur = 0, load }) {
   const { t: tr } = useI18n();
   const ref = useRef(null);
+  const [url, setUrl] = useState(src || "");
+  const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
-  const [dur, setDur] = useState(0);
+  const [dur, setDur] = useState(knownDur || 0);
   const bars = useMemo(() => {
     let h = [...String(id)].reduce((a, c) => (a * 33 + c.charCodeAt(0)) >>> 0, 5381);
     return Array.from({ length: 32 }, () => {
@@ -120,7 +122,19 @@ export function VoiceMsg({ src, id = "x" }) {
       };
     } else setDur(a.duration);
   }
-  function toggle() {
+  // Ses dosyası ilk dokunuşta indirilir (liste yüklenirken indirilmez)
+  async function toggle() {
+    if (!url) {
+      if (!load || busy) return;
+      setBusy(true);
+      try {
+        const u = await load();
+        if (!u) return;
+        setUrl(u);
+        setTimeout(() => ref.current?.play().catch(() => {}), 60);
+      } finally { setBusy(false); }
+      return;
+    }
     const a = ref.current;
     if (!a) return;
     a.paused ? a.play() : a.pause();
@@ -130,8 +144,8 @@ export function VoiceMsg({ src, id = "x" }) {
     <div className="voice">
       <audio
         ref={ref}
-        src={src}
-        preload="metadata"
+        src={url || undefined}
+        preload={url ? "metadata" : "none"}
         onLoadedMetadata={onMeta}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
@@ -139,7 +153,7 @@ export function VoiceMsg({ src, id = "x" }) {
         onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
       />
       <button type="button" className="voice-btn" onClick={toggle} aria-label={playing ? tr("pause") : tr("play")}>
-        <Icon name={playing ? "pause" : "play"} size={16} />
+        {busy ? <span className="vm-spin" /> : <Icon name={playing ? "pause" : "play"} size={16} />}
       </button>
       <div className="wave" aria-hidden="true">
         {bars.map((h, i) => (
