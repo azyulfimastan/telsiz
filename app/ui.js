@@ -359,7 +359,6 @@ export function Splash() {
     e.stopPropagation();
     radioClick();
     setLang(code);
-    try { localStorage.setItem("langChosen", "1"); } catch {}
     setPhase("credit");
   };
 
