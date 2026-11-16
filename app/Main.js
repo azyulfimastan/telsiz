@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import {
-  addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query,
+  addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query,
   serverTimestamp, setDoc, updateDoc, where, limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -334,6 +334,9 @@ function Chat({ me, friend, onBack, onRead }) {
   const first = useRef(true);
   const pressed = useRef(false);
   const lockedRef = useRef(false);
+  const [delId, setDelId] = useState(null);
+  const pressTimer = useRef(null);
+  const longFired = useRef(false);
   const [locked, setLocked] = useState(false);
   const liveRef = useRef(null);
   const statusRef = useRef("offline");
@@ -489,6 +492,19 @@ function Chat({ me, friend, onBack, onRead }) {
     setRec(false);
   }
 
+  const pressStart = (id) => {
+    longFired.current = false;
+    clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => { longFired.current = true; setDelId(id); }, 550);
+  };
+  const pressEnd = () => clearTimeout(pressTimer.current);
+  async function removeMsg() {
+    const id = delId;
+    setDelId(null);
+    try { await deleteDoc(doc(db, "chats", chatId, "messages", id)); }
+    catch (er) { setErr(t("delFail", { e: er.code || er.message })); }
+  }
+
   const clock = (m) => m.createdAt?.toDate?.().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const recLabel = liveState === "live" ? t("live") : liveState === "connecting" ? t("connecting") : t("releaseSend");
 
@@ -513,13 +529,31 @@ function Chat({ me, friend, onBack, onRead }) {
           </div>
         )}
         {msgs.map((m) => (
-          <div key={m.id} className={"msg" + (m.from === me.uid ? " me" : "")}>
+          <div
+            key={m.id}
+            className={"msg" + (m.from === me.uid ? " me" : "")}
+            onPointerDown={() => pressStart(m.id)}
+            onPointerUp={pressEnd}
+            onPointerLeave={pressEnd}
+            onPointerCancel={pressEnd}
+            onContextMenu={(e) => e.preventDefault()}
+            onClickCapture={(e) => { if (longFired.current) { e.preventDefault(); e.stopPropagation(); longFired.current = false; } }}
+          >
             {m.type === "voice" ? <VoiceMsg src={m.audio} id={m.id} /> : m.text}
             <span className="time">{clock(m)}</span>
           </div>
         ))}
         <div ref={endRef} />
       </div>
+
+      {delId && (
+        <div className="sheet-bg" onClick={() => setDelId(null)}>
+          <div className="sheet" role="dialog" aria-label={t("delMsg")} onClick={(e) => e.stopPropagation()}>
+            <button className="sheet-del" onClick={removeMsg}>{t("delMsg")}</button>
+            <button className="sheet-cancel" onClick={() => setDelId(null)}>{t("cancel")}</button>
+          </div>
+        </div>
+      )}
 
       <div className="composer">
         {err && (

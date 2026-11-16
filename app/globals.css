@@ -170,3 +170,9 @@ body.talking, body.talking * { user-select: none !important; -webkit-user-select
 .lock-btn:hover { background: #243040; }
 .lock-btn.on { background: var(--danger); color: #fff; border-color: var(--danger); animation: ring 1.2s ease-out infinite; }
 @media (prefers-reduced-motion: reduce) { .lock-btn.on { animation: none; } }
+
+.msg { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 60; display: grid; align-items: end; justify-items: center; padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)); }
+.sheet { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
+.sheet button { padding: 14px; border-radius: 12px; font-weight: 600; background: var(--surface-2); color: var(--text); }
+.sheet .sheet-del { background: var(--danger); color: #fff; }
