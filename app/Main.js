@@ -9,7 +9,7 @@ import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { listenLive, liveSupported, startLive } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
-import { Credit, Avatar, Icon, LangSwitch, Logo, ThemeSwitch, VoiceMsg } from "./ui";
+import { Credit, Avatar, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -342,7 +342,7 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot"><div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div><ThemeSwitch /></div>
+          <div className="side-foot"><div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div><div className="theme-row"><ThemeSwitch /><ModeSwitch /></div></div>
         </div>
       </aside>
 

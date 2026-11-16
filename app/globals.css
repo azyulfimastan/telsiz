@@ -20,26 +20,35 @@
   --grad-a: #10b981; --grad-b: #06b6d4; --err-ink: #c02f35; --err-bg: #fde8e9;
   --shadow: 0 10px 30px rgba(20, 120, 90, .16);
 }
+/* ocean, purple, night: artık açık renkli temalar. Koyu görünüm ayrı "mode" düğmesiyle gelir */
 :root[data-theme="ocean"] {
-  --bg: #0a1628; --surface: #10213a; --surface-2: #17304f; --line: #21406a;
-  --text: #e6f1ff; --muted: #8fabcc; --accent: #22d3ee; --mine: #14507c;
-  --hover: #1d3a60; --placeholder: #5f7ea6; --wave: #3a5a85;
-  --grad-a: #0ea5e9; --grad-b: #6366f1; --err-ink: #f0a39e; --err-bg: #3a1f1d;
-  --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  --bg: #eaf6fd; --surface: #ffffff; --surface-2: #d6ecfa; --line: #bfe0f3;
+  --text: #0f2a3d; --muted: #4d7a96; --accent: #0ea5e9; --mine: #c4e6fa;
+  --hover: #cfe9f8; --placeholder: #8fb7cf; --wave: #9fcbe6;
+  --grad-a: #0ea5e9; --grad-b: #6366f1; --err-ink: #c02f35; --err-bg: #fde8e9;
+  --shadow: 0 10px 30px rgba(14, 120, 190, .16);
 }
 :root[data-theme="purple"] {
-  --bg: #150f26; --surface: #1e1637; --surface-2: #2b2050; --line: #3a2c66;
-  --text: #f0eaff; --muted: #ab9fd4; --accent: #b79bff; --mine: #46327f;
-  --hover: #33265d; --placeholder: #7a6ca8; --wave: #54428c;
-  --grad-a: #8b5cf6; --grad-b: #ec4899; --err-ink: #f0a39e; --err-bg: #3a1f1d;
-  --shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  --bg: #f4efff; --surface: #ffffff; --surface-2: #e8defd; --line: #d9c9f8;
+  --text: #2a1b4d; --muted: #7a65ab; --accent: #8b5cf6; --mine: #e0d0ff;
+  --hover: #e6d9fd; --placeholder: #aa97d3; --wave: #c4aaf3;
+  --grad-a: #8b5cf6; --grad-b: #ec4899; --err-ink: #c02f35; --err-bg: #fde8e9;
+  --shadow: 0 10px 30px rgba(110, 70, 200, .16);
 }
 :root[data-theme="night"] {
-  --bg: #0e1218; --surface: #151b23; --surface-2: #1b232d; --line: #242d38;
-  --text: #e8ecf1; --muted: #8a96a6; --accent: #e0a94a; --mine: #22324a;
-  --hover: #243040; --placeholder: #5f6b7a; --wave: #5b6879;
-  --grad-a: #f59e0b; --grad-b: #e11d48; --err-ink: #f0a39e; --err-bg: #3a1f1d;
-  --shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  --bg: #fff4ea; --surface: #ffffff; --surface-2: #ffe4cc; --line: #fbd2ae;
+  --text: #3a2010; --muted: #96653f; --accent: #f59e0b; --mine: #ffddb8;
+  --hover: #ffe2c4; --placeholder: #c9a07f; --wave: #f3be8c;
+  --grad-a: #f59e0b; --grad-b: #e11d48; --err-ink: #c02f35; --err-bg: #fde8e9;
+  --shadow: 0 10px 30px rgba(200, 110, 20, .16);
+}
+/* Koyu görünüm: renk temasından bağımsız, yalnızca zemin ve yazı renklerini değiştirir */
+:root[data-mode="dark"] {
+  --bg: #0f1218; --surface: #171b24; --surface-2: #1e2430; --line: #2a3140;
+  --text: #eceff5; --muted: #94a0b4; --hover: #232a38; --placeholder: #66728a; --wave: #56637c;
+  --mine: color-mix(in srgb, var(--accent) 32%, #171b24);
+  --err-ink: #f0a39e; --err-bg: #3a1f1d; --shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  color-scheme: dark;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
@@ -397,3 +406,7 @@ html { background: var(--grad-b, #6a63f5); }
 .splash-credit .plain-name { font-weight: 600; }
 
 .update-bar { position: fixed; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top)); z-index: 300; padding: 12px 16px; border-radius: 12px; color: #fff; font-weight: 600; background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+
+.mode-btn { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--text); border: 1px solid var(--line); background: var(--surface-2); -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+.mode-btn:hover { background: var(--hover); }
+.theme-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

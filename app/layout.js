@@ -25,7 +25,7 @@ export const viewport = { themeColor: "#5b6cff", viewportFit: "cover", width: "d
 export default function RootLayout({ children }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"pink"}catch(e){}` }} /></head>
+      <head><script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"pink";document.documentElement.dataset.mode=localStorage.getItem("mode")||"light"}catch(e){}` }} /></head>
       <body><LangProvider>{children}<Updater /></LangProvider></body>
     </html>
   );

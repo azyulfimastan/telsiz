@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LANGS, THEMES, useI18n } from "@/lib/i18n";
 
 const P = {
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
   mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
   lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
   stop: <rect x="7" y="7" width="10" height="10" rx="2" />,
@@ -181,6 +183,24 @@ export function ThemeSwitch() {
         />
       ))}
     </div>
+  );
+}
+
+export function ModeSwitch() {
+  const { lang } = useI18n();
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(document.documentElement.dataset.mode === "dark"); }, []);
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.dataset.mode = next ? "dark" : "light";
+    try { localStorage.setItem("mode", next ? "dark" : "light"); } catch {}
+  };
+  const label = dark ? { tr: "Açık görünüm", pl: "Jasny motyw", en: "Light mode" }[lang] : { tr: "Koyu görünüm", pl: "Ciemny motyw", en: "Dark mode" }[lang];
+  return (
+    <button type="button" className="mode-btn" onClick={toggle} title={label} aria-label={label} aria-pressed={dark}>
+      <Icon name={dark ? "sun" : "moon"} size={16} />
+    </button>
   );
 }
 
