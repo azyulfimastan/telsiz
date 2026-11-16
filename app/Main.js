@@ -25,6 +25,7 @@ export default function Main({ user, onLogout }) {
   const [blocked, setBlocked] = useState(false);
   const [diagOpen, setDiagOpen] = useState(false);
   const [friends, setFriends] = useState([]);
+  const [friendsReady, setFriendsReady] = useState(false);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
   const [email, setEmail] = useState("");
@@ -208,6 +209,7 @@ export default function Main({ user, onLogout }) {
       prevChats.current = Object.fromEntries(list.map((f) => [f.uid, f.lastAt]));
       friendsRef.current = list;
       setFriends(list);
+      setFriendsReady(true);
     });
   }, [user.uid]);
 
@@ -289,7 +291,10 @@ export default function Main({ user, onLogout }) {
           ))}
 
           <div className="section-label">{t("chats")}</div>
-          {friends.length === 0 && (
+          {!friendsReady && [0, 1, 2].map((i) => (
+            <div className="item sk-item" key={"sk" + i}><i className="sk sk-av" /><div className="meta"><i className="sk sk-l1" /><i className="sk sk-l2" /></div></div>
+          ))}
+          {friendsReady && friends.length === 0 && (
             <p className="empty">{t("noFriends")}</p>
           )}
           {friends.map((f) => (
@@ -385,6 +390,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const { t, locale } = useI18n();
   const chatId = chatIdOf(me.uid, friend.uid);
   const [msgs, setMsgs] = useState([]);
+  const [ready, setReady] = useState(false);
   const [text, setText] = useState("");
   const [rec, setRec] = useState(false);
   const [sec, setSec] = useState(0);
@@ -428,6 +434,7 @@ function Chat({ me, friend, onBack, onRead }) {
     const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(200));
     return onSnapshot(q, (snap) => {
       setMsgs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setReady(true);
       // Canlı yayınla zaten dinlenmeyen sesli mesajı otomatik çal
       if (!first.current) {
         snap.docChanges().forEach((c) => {
@@ -653,16 +660,21 @@ function Chat({ me, friend, onBack, onRead }) {
       </header>
 
       <div className="msgs">
-        {msgs.length === 0 && (
+        {!ready && (
+          <div className="sk-msgs" aria-hidden="true">
+            <i className="sk sk-b l" style={{ width: "52%" }} /><i className="sk sk-b r" style={{ width: "38%" }} /><i className="sk sk-b l" style={{ width: "64%" }} /><i className="sk sk-b r" style={{ width: "46%" }} />
+          </div>
+        )}
+        {ready && msgs.length === 0 && (
           <div className="chat-empty">
             <Icon name="mic" size={28} />
             <p>{t("emptyChat")}</p>
           </div>
         )}
-        {msgs.map((m) => (
+        {msgs.map((m, i) => (
           <div
             key={m.id}
-            className={"msg" + (m.from === me.uid ? " me" : "")}
+            className={"msg" + (m.from === me.uid ? " me" : "") + (i === 0 || msgs[i - 1].from !== m.from ? " first" : "") + (i === msgs.length - 1 || msgs[i + 1].from !== m.from ? " last" : "")}
             onPointerDown={() => pressStart(m.id)}
             onPointerUp={pressEnd}
             onPointerLeave={pressEnd}
