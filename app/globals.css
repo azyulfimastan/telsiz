@@ -263,3 +263,5 @@ body { transition: background .2s ease, color .2s ease; }
 }
 
 .login .credit-pill { color: #fff; font-size: 15px; }
+
+.credit-top { padding: 10px 10px 0; flex-shrink: 0; }

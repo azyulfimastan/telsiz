@@ -66,6 +66,7 @@ export default function Page() {
   if (!user)
     return (
       <main className="login">
+        <p className="credit-pill"><Logo size={20} /> {t("credit")}</p>
         <div className="login-box">
           <Logo size={44} />
           <div>
@@ -83,7 +84,6 @@ export default function Page() {
           <LangSwitch />
           <ThemeSwitch />
         </div>
-        <p className="credit-pill"><Logo size={20} /> {t("credit")}</p>
       </main>
     );
 

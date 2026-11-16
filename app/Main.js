@@ -220,6 +220,8 @@ export default function Main({ user, onLogout }) {
           </button>
         </header>
 
+        <div className="credit-top"><p className="credit-card"><Logo size={22} /> <span>{t("credit")}</span></p></div>
+
         <div className="list">
           {notif === "unsupported" && (
             <p className="empty">{t("iosHint")}</p>
@@ -288,7 +290,7 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /><p className="credit-card"><Logo size={22} /> <span>{t("credit")}</span></p></div>
+          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /></div>
         </div>
       </aside>
 
@@ -317,7 +319,7 @@ export default function Main({ user, onLogout }) {
           />
         ) : (
           <div className="pick">
-            <div><p>{t("pickChat")}</p><p className="credit-pill soft"><Logo size={20} /> {t("credit")}</p></div>
+            <div><p className="credit-pill soft" style={{ marginTop: 0, marginBottom: 16 }}><Logo size={20} /> {t("credit")}</p><p>{t("pickChat")}</p></div>
           </div>
         )}
       </section>
