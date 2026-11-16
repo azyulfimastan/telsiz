@@ -268,8 +268,8 @@ export function Splash() {
 
   useEffect(() => {
     if (phase !== "on") return;
-    const a = setTimeout(() => setPhase("out"), 6800);
-    const b = setTimeout(() => setPhase("off"), 7600);
+    const a = setTimeout(() => setPhase("out"), 8800);
+    const b = setTimeout(() => setPhase("off"), 9600);
     return () => { clearTimeout(a); clearTimeout(b); };
   }, [phase]);
 
@@ -303,13 +303,57 @@ export function Splash() {
     <div key="main" className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
       <Backdrop />
       <div className="splash-in">
-        <Orb size={92} />
-        <h1 className="display splash-title"><Typed text="TELSIZ" start={900} step={190} /></h1>
-        <div className="splash-rule" />
-        <p className="splash-tag">{t("tagline")}</p>
-        <p className="splash-credit"><TypedCredit start={3000} /></p>
-        <div className="eq" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
+        <div className="scroll">
+          <i className="rod top" /><i className="rod bot" />
+          <div className="paper">
+            <div className="paper-in">
+              <h1 className="ink-title"><InkLine at={1.7} dur={2.1}>Telsiz</InkLine></h1>
+              <p className="ink-tag">{t("tagline")}</p>
+              <InkCredit at={4.4} />
+              <div className="seal"><Logo size={26} /></div>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function Quill() {
+  return (
+    <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
+      <path d="M60 3C42 6 24 20 13 44l-3 9 9-4C40 41 55 25 60 3z" fill="#fff8ee" stroke="#8a5a33" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M10 53L56 8" stroke="#8a5a33" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M14 42l8 3M20 33l9 3M28 24l9 3M37 16l8 3" stroke="#d9b98a" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M10 53l-5 8 9-4z" fill="#2b1840" />
+    </svg>
+  );
+}
+
+function InkLine({ children, at, dur, className = "" }) {
+  return (
+    <span className={"ink-line " + className} style={{ "--at": at + "s", "--dur": dur + "s" }}>
+      <span className="ink-text">{children}</span>
+      <span className="quill"><i><Quill /></i></span>
+    </span>
+  );
+}
+
+function InkCredit({ at }) {
+  const { t } = useI18n();
+  const pre = t("creditPre"), name = t("creditName"), post = t("creditPost");
+  let c = at;
+  const line = (txt, cls, dur) => {
+    if (!txt) return null;
+    const el = <div key={cls + txt} className="ink-row"><InkLine at={c} dur={dur} className={cls}>{txt}</InkLine></div>;
+    c += dur + 0.1;
+    return el;
+  };
+  return (
+    <div className="ink-credit" aria-label={t("credit")}>
+      {line(pre, "ink-small", 0.9)}
+      {line(name, "ink-name", 1.3)}
+      {line(post, "ink-small", 1.2)}
     </div>
   );
 }

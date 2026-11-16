@@ -383,3 +383,56 @@ html { background: var(--grad-b, #6a63f5); }
 .login-credit .credit-line, .login-credit { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .login-credit .plain-name { font-size: 30px; font-weight: 600; line-height: 1.1; }
 .login-credit .roman { font-size: 15px; }
+
+/* --- Parşömen ve tüy kalem --- */
+.scroll { position: relative; width: min(88vw, 400px); filter: drop-shadow(0 22px 28px rgba(90, 10, 60, .45)); }
+.paper {
+  position: relative; clip-path: inset(50% 0 50% 0); animation: unroll 1.5s cubic-bezier(.3, .7, .2, 1) .15s forwards;
+  background:
+    radial-gradient(120% 90% at 50% 40%, #fbeccb 0%, #f2d9a4 60%, #dcb877 100%);
+  border-radius: 4px 8px 5px 9px;
+  box-shadow: inset 0 0 46px rgba(130, 80, 20, .5), inset 0 0 6px rgba(90, 50, 10, .5);
+}
+.paper::before { content: ""; position: absolute; inset: 0; opacity: .35; pointer-events: none;
+  background: repeating-linear-gradient(8deg, rgba(120, 80, 30, .07) 0 2px, transparent 2px 7px), radial-gradient(circle at 20% 25%, rgba(150, 100, 40, .25), transparent 18%), radial-gradient(circle at 80% 70%, rgba(150, 100, 40, .22), transparent 20%); }
+@keyframes unroll { to { clip-path: inset(0 0 0 0); } }
+.paper-in { position: relative; padding: 48px 20px 30px; display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 380px; }
+.rod {
+  position: absolute; left: -12px; right: -12px; height: 26px; z-index: 3; border-radius: 13px;
+  background: linear-gradient(180deg, #e8c27a 0%, #9a6128 45%, #6a3d16 100%);
+  box-shadow: inset 0 2px 3px rgba(255, 235, 190, .8), 0 4px 6px rgba(60, 20, 10, .4);
+}
+.rod::before, .rod::after { content: ""; position: absolute; top: -3px; bottom: -3px; width: 14px; border-radius: 7px; background: radial-gradient(circle at 35% 30%, #f6dc9a, #8a5420); }
+.rod::before { left: -6px; } .rod::after { right: -6px; }
+.rod.top { top: 50%; transform: translateY(-50%); animation: rodTop 1.5s cubic-bezier(.3, .7, .2, 1) .15s forwards; }
+.rod.bot { bottom: 50%; transform: translateY(50%); animation: rodBot 1.5s cubic-bezier(.3, .7, .2, 1) .15s forwards; }
+@keyframes rodTop { to { top: 0; } }
+@keyframes rodBot { to { bottom: 0; } }
+
+.ink-title { font-family: "Great Vibes", cursive; font-weight: 400; font-size: clamp(64px, 20vw, 96px); line-height: 1.15; color: #2b1840; margin: 0; }
+.ink-line { position: relative; display: inline-block; }
+.ink-text { display: inline-block; white-space: nowrap; clip-path: inset(-30% 100% -30% 0); text-shadow: 0 0 1px rgba(43, 24, 64, .45);
+  animation: inkReveal var(--dur) linear var(--at) forwards; }
+@keyframes inkReveal { 0% { clip-path: inset(-30% 100% -30% 0); } 92%, 100% { clip-path: inset(-30% 0 -30% 0); } }
+.quill { position: absolute; left: 0; bottom: 16%; width: 0; height: 0; opacity: 0; pointer-events: none; z-index: 4;
+  animation: quillGo var(--dur) linear var(--at) forwards; }
+.quill i { position: absolute; left: -4px; bottom: -3px; width: 58px; height: 58px; display: block; transform-origin: 8% 92%;
+  animation: quillBob .45s ease-in-out infinite; }
+@keyframes quillGo { 0% { left: 0; opacity: 1; } 92% { left: 100%; opacity: 1; } 100% { left: 108%; opacity: 0; } }
+@keyframes quillBob { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(-5deg) translateY(-4px); } }
+
+.ink-tag { font-family: "Cinzel", Georgia, serif; font-size: 14px; letter-spacing: .04em; color: #6b4a2a; text-align: center; max-width: 290px; margin: 2px 0 14px; opacity: 0; animation: splashIn 1s ease 3.8s forwards; }
+.ink-credit { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.ink-row { min-height: 1.1em; }
+.ink-small { font-family: "Cinzel", Georgia, serif; font-weight: 600; font-size: clamp(15px, 4.4vw, 19px); letter-spacing: .08em; color: #5a3a1a; line-height: 1.7; }
+.ink-name { font-family: "Great Vibes", cursive; font-size: clamp(46px, 14vw, 68px); line-height: 1.15; color: #2b1840; }
+.seal { margin-top: 16px; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #ff7fb4, #d81b72 60%, #9c1257); box-shadow: 0 4px 10px rgba(90, 10, 50, .5), inset 0 0 0 4px rgba(255, 255, 255, .18);
+  opacity: 0; animation: sealStamp .55s cubic-bezier(.3, 1.6, .4, 1) 7s forwards; }
+.seal svg, .seal img { filter: brightness(0) invert(1); }
+@keyframes sealStamp { 0% { opacity: 0; transform: scale(2.4) rotate(-20deg); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .paper { clip-path: none; animation: none; } .rod { animation: none; }
+  .rod.top { top: 0; } .rod.bot { bottom: 0; } .ink-text { clip-path: none; animation: none; } .quill { display: none; }
+  .ink-tag, .seal { opacity: 1; animation: none; }
+}
