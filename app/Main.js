@@ -399,6 +399,7 @@ function Chat({ me, friend, onBack, onRead }) {
         lv?.stop();
         setLiveState("");
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
+        if (wasLive) return; // canlı yayınlandı: kayıt gönderme, telsiz gibi
         const blob = new Blob(chunks.current, { type: mr.mimeType });
         if (blob.size > 700_000) return setErr(t("tooLong"));
         const audio = await new Promise((res) => {
@@ -408,9 +409,9 @@ function Chat({ me, friend, onBack, onRead }) {
         });
         try {
           await addDoc(collection(db, "chats", chatId, "messages"), {
-            from: me.uid, type: "voice", audio, live: wasLive, createdAt: serverTimestamp(),
+            from: me.uid, type: "voice", audio, createdAt: serverTimestamp(),
           });
-          afterSend("voice", wasLive);
+          afterSend("voice");
         } catch (er) {
           setErr(t("voiceFail", { e: er.code || er.message }));
         }
