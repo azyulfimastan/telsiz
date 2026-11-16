@@ -32,9 +32,32 @@ export default function Main({ user, onLogout }) {
     const el = (liveAudio.current = new Audio());
     el.autoplay = true;
     el.playsInline = true;
+    // Arka plandaki sekmede de bağlantı donmasın: çok kısık, sürekli çalan bir ses + medya oturumu
+    let ka = null;
+    const keepAlive = () => {
+      if (ka) return;
+      try {
+        const rate = 8000, n = rate;
+        const buf = new ArrayBuffer(44 + n * 2);
+        const v = new DataView(buf);
+        const w = (o, str) => [...str].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+        w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVEfmt ");
+        v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+        w(36, "data"); v.setUint32(40, n * 2, true);
+        for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.round((Math.random() - 0.5) * 6), true);
+        ka = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" })));
+        ka.loop = true;
+        ka.play().catch(() => { ka = null; });
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({ title: "Telsiz", artist: "Canlı telsiz açık" });
+        }
+      } catch {}
+    };
     const unlock = () => {
       el.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
       el.play().catch(() => {}).finally(() => { el.removeAttribute("src"); el.load(); });
+      keepAlive();
       window.removeEventListener("pointerdown", unlock);
     };
     window.addEventListener("pointerdown", unlock);
@@ -350,6 +373,11 @@ function Chat({ me, friend, onBack, onRead }) {
   }, [msgs]);
 
   useEffect(() => {
+    document.body.classList.toggle("talking", rec);
+    return () => document.body.classList.remove("talking");
+  }, [rec]);
+
+  useEffect(() => {
     if (!rec) return;
     setSec(0);
     const i = setInterval(() => setSec(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
@@ -501,20 +529,22 @@ function Chat({ me, friend, onBack, onRead }) {
               </button>
             </>
           )}
-          <button
-            type="button"
-            className={"ptt" + (rec ? " rec" : "")}
-            onPointerDown={startRec}
-            onPointerUp={stopRec}
-            onPointerCancel={stopRec}
-            onContextMenu={(e) => e.preventDefault()}
-            aria-label={t("holdToTalk")}
-            title={t("holdToTalk")}
-          >
-            <Icon name="mic" size={24} />
-          </button>
         </form>
-        {!rec && <p className="hint">{t("hint")}</p>}
+        <div className="ptt-wrap">
+          <button
+              type="button"
+              className={"ptt" + (rec ? " rec" : "")}
+              onPointerDown={startRec}
+              onPointerUp={stopRec}
+              onPointerCancel={stopRec}
+              onContextMenu={(e) => e.preventDefault()}
+              aria-label={t("holdToTalk")}
+              title={t("holdToTalk")}
+            >
+              <Icon name="mic" size={32} />
+            </button>
+          {!rec && <p className="hint">{t("hint")}</p>}
+        </div>
       </div>
     </>
   );
