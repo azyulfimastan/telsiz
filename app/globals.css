@@ -420,3 +420,5 @@ html { background: var(--grad-b, #6a63f5); }
 .continue-btn { margin-top: 18px; padding: 14px 40px; border-radius: 999px; font-size: 17px; font-weight: 700; color: #c2185b; background: #fff; box-shadow: 0 8px 24px rgba(120, 10, 70, .35); opacity: 0; animation: splashIn .6s cubic-bezier(.2, .7, .2, 1) 1.7s forwards, btnPulse 2s ease-in-out 2.4s infinite; }
 @keyframes btnPulse { 0%, 100% { box-shadow: 0 8px 24px rgba(120, 10, 70, .35), 0 0 0 0 rgba(255, 255, 255, .55); } 50% { box-shadow: 0 8px 24px rgba(120, 10, 70, .35), 0 0 0 12px rgba(255, 255, 255, 0); } }
 @media (prefers-reduced-motion: reduce) { .continue-btn { opacity: 1; animation: none; } }
+.continue-btn.google { display: inline-flex; align-items: center; gap: 12px; padding: 15px 30px; color: #1f2933; }
+.splash-err { max-width: 320px; font-size: 13px; color: #fff; background: rgba(0, 0, 0, .35); padding: 8px 12px; border-radius: 10px; word-break: break-word; }
