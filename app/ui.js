@@ -329,11 +329,15 @@ export function Splash() {
     return onAuthStateChanged(auth, (u) => setUser(u));
   }, []);
 
-  // Giriş bu ekrandan yapılınca açılış ekranı kapanır
+  // Zaten giriş yapmışsa açılış ekranı atlanır ve kayıtlı dil korunur; yapmamışsa Türkçe'den başlar
   useEffect(() => {
-    if (prevUser.current === null && user && phase !== "off") setPhase("out");
+    if (user === undefined) return;
+    if (prevUser.current === undefined) {
+      if (user) setPhase("off");
+      else { setLang("tr"); try { localStorage.removeItem("lang"); } catch {} }
+    } else if (prevUser.current === null && user) setPhase("out");
     prevUser.current = user;
-  }, [user, phase]);
+  }, [user]);
 
   const login = async () => {
     setErr("");
@@ -385,14 +389,14 @@ export function Splash() {
           </>
         )}
       </div>
-      <div className={"splash-langs" + (phase === "show" ? "" : " gone")}>
+      {user === null && <div className={"splash-langs" + (phase === "show" ? "" : " gone")}>
         <div className="pick-hint"><span>Dil seçiniz</span><span>Wybierz język</span><span>Select language</span></div>
         <div className="lang-row">
           {LANGS.map((l) => (
             <button key={l.code} className="lang-pick-btn" onClick={(e) => choose(e, l.code)}>{l.name}</button>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
