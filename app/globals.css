@@ -68,6 +68,7 @@ input { font: inherit; color: inherit; }
   padding: 12px 16px; border-radius: 10px; width: 100%;
 }
 .btn-google:hover { background: #f1f3f5; }
+.btn-google { border: 2.5px solid var(--grad-a); box-shadow: 0 0 0 4px color-mix(in srgb, var(--grad-a) 22%, transparent); }
 .err { display: flex; gap: 8px; align-items: flex-start; color: var(--err-ink); font-size: 13px; word-break: break-word; }
 .loading { min-height: 100dvh; display: grid; place-items: center; color: var(--muted); }
 
@@ -262,7 +263,7 @@ body { transition: background .2s ease, color .2s ease; }
   border: 1px solid color-mix(in srgb, var(--grad-a) 35%, var(--line)); color: var(--text);
 }
 
-.login .credit-pill { color: #fff; font-size: 15px; }
+.login .credit-pill { color: #fff; font-size: 17px; }
 
 .credit-top { padding: 10px 10px 0; flex-shrink: 0; }
 
@@ -285,14 +286,14 @@ body { transition: background .2s ease, color .2s ease; }
 .tick.read { color: #22c55e; opacity: 1; font-weight: 700; }
 
 /* Eski Roma yazısı (Cinzel) + sade isim */
-.display { font-family: "Cinzel Decorative", "Cinzel", Georgia, serif; font-weight: 700; letter-spacing: .05em; }
+.display { font-family: "Great Vibes", "Cinzel Decorative", Georgia, cursive; font-weight: 400; letter-spacing: .02em; line-height: 1.1; }
 .roman { font-family: "Cinzel", Georgia, serif; font-weight: 600; letter-spacing: .07em; }
 .plain-name { font-family: "IBM Plex Sans", system-ui, sans-serif; font-weight: 600; letter-spacing: .01em; }
 .credit-line { display: inline-flex; flex-wrap: wrap; gap: 4px 7px; align-items: baseline; justify-content: center; }
-.login-credit { font-size: 13px; color: var(--muted); margin-top: -8px; }
+.login-credit { font-size: 16px; color: var(--muted); margin-top: -8px; }
 .login-credit .plain-name { color: var(--text); }
-.credit-card .roman { font-size: 11px; }
-.credit-pill .roman { font-size: 12px; }
+.credit-card .roman { font-size: 14px; }
+.credit-pill .roman { font-size: 15px; }
 
 .splash {
   position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; text-align: center; color: #fff;
@@ -303,7 +304,7 @@ body { transition: background .2s ease, color .2s ease; }
 .splash-title { font-size: clamp(44px, 12vw, 72px); line-height: 1.05; text-shadow: 0 4px 24px rgba(0, 0, 0, .22); }
 .splash-rule { width: 120px; height: 2px; background: rgba(255, 255, 255, .7); border-radius: 2px; }
 .splash-credit { font-size: 15px; color: rgba(255, 255, 255, .95); }
-.splash-credit .roman { font-size: 14px; }
+.splash-credit .roman { font-size: 19px; }
 .splash-credit .plain-name { font-size: 17px; }
 @keyframes splashIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .splash-in { animation: none; } .splash { transition: none; } }
