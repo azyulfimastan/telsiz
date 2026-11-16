@@ -26,16 +26,20 @@ export default function Page() {
     getRedirectResult(auth).catch((e) => setErr(e.code + ": " + e.message));
     return onAuthStateChanged(auth, async (u) => {
       if (u) {
-        await setDoc(
-          doc(db, "users", u.uid),
-          {
-            name: u.displayName || u.email,
-            email: (u.email || "").toLowerCase(),
-            photo: u.photoURL || "",
-            lastSeen: serverTimestamp(),
-          },
-          { merge: true }
-        );
+        try {
+          await setDoc(
+            doc(db, "users", u.uid),
+            {
+              name: u.displayName || u.email,
+              email: (u.email || "").toLowerCase(),
+              photo: u.photoURL || "",
+              lastSeen: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          setErr("Firestore: " + e.code + " — Firebase'de Firestore Rules yayınlanmış mı?");
+        }
       }
       setUser(u);
     });
@@ -55,5 +59,10 @@ export default function Page() {
       </div>
     );
 
-  return <Main user={user} onLogout={() => signOut(auth)} />;
+  return (
+    <>
+      {err && <p style={{ background: "#7f1d1d", padding: 8, textAlign: "center" }}>⚠️ {err}</p>}
+      <Main user={user} onLogout={() => signOut(auth)} />
+    </>
+  );
 }
