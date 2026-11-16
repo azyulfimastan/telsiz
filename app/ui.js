@@ -247,9 +247,15 @@ export function Splash() {
       seen = sessionStorage.getItem("splash") === "1";
       sessionStorage.setItem("splash", "1");
     } catch {}
-    if (!chosen) return setPhase("pick");
+    if (!chosen) return setPhase("intro");
     if (!seen) setPhase("on");
   }, []);
+
+  useEffect(() => {
+    if (phase !== "intro") return;
+    const a = setTimeout(() => setPhase("pick"), 2700);
+    return () => clearTimeout(a);
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== "on") return;
@@ -265,6 +271,17 @@ export function Splash() {
   };
 
   if (phase === "off") return null;
+  if (phase === "intro") {
+    return (
+      <div className="splash" key="intro">
+        <div className="splash-in">
+          <div className="splash-logo"><Logo size={92} /></div>
+          <h1 className="display splash-title"><Typed text="Telsiz" start={400} step={170} /></h1>
+          <div className="splash-rule" />
+        </div>
+      </div>
+    );
+  }
   if (phase === "pick") {
     return (
       <div className="splash">
@@ -284,12 +301,12 @@ export function Splash() {
     );
   }
   return (
-    <div className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
+    <div key="main" className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
       <div className="splash-in">
         <div className="splash-logo"><Logo size={92} /></div>
         <h1 className="display splash-title"><Typed text="Telsiz" start={500} step={170} /></h1>
         <div className="splash-rule" />
-        <p className="splash-credit"><TypedCredit start={2000} /></p>
+        <p className="splash-credit"><TypedCredit start={1800} /></p>
       </div>
     </div>
   );
