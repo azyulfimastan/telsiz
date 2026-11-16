@@ -8,7 +8,7 @@ import { db } from "@/lib/firebase";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { listenLive, liveSupported, startLive } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
-import { Avatar, Icon, LangSwitch, ThemeSwitch, VoiceMsg } from "./ui";
+import { Avatar, Icon, LangSwitch, Logo, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -288,7 +288,7 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /><p className="credit">{t("credit")}</p></div>
+          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /><p className="credit-card"><Logo size={22} /> <span>{t("credit")}</span></p></div>
         </div>
       </aside>
 
@@ -317,7 +317,7 @@ export default function Main({ user, onLogout }) {
           />
         ) : (
           <div className="pick">
-            <p>{t("pickChat")}</p>
+            <div><p>{t("pickChat")}</p><p className="credit-pill soft"><Logo size={20} /> {t("credit")}</p></div>
           </div>
         )}
       </section>

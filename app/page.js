@@ -82,8 +82,8 @@ export default function Page() {
           )}
           <LangSwitch />
           <ThemeSwitch />
-          <p className="credit">{t("credit")}</p>
         </div>
+        <p className="credit-pill"><Logo size={20} /> {t("credit")}</p>
       </main>
     );
 

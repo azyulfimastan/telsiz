@@ -248,3 +248,18 @@ body { transition: background .2s ease, color .2s ease; }
 .credit { font-size: 11px; color: var(--muted); text-align: center; opacity: .85; }
 .side-foot .credit { text-align: left; }
 .login .credit { margin-top: -4px; }
+
+.login { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.credit-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px;
+  background: rgba(255, 255, 255, .22); color: #fff; font-weight: 600; font-size: 14px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 4px 16px rgba(0, 0, 0, .15);
+}
+.credit-pill.soft { background: var(--surface-2); color: var(--text); margin-top: 16px; box-shadow: none; }
+.credit-card {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--grad-a) 16%, var(--surface)), color-mix(in srgb, var(--grad-b) 16%, var(--surface)));
+  border: 1px solid color-mix(in srgb, var(--grad-a) 35%, var(--line)); color: var(--text);
+}
+
+.login .credit-pill { color: #fff; font-size: 15px; }
