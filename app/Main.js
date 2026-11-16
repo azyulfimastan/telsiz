@@ -9,7 +9,7 @@ import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { listenLive, liveSupported, startLive } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
-import { Avatar, Icon, LangSwitch, Logo, ThemeSwitch, VoiceMsg } from "./ui";
+import { Credit, Avatar, Icon, LangSwitch, Logo, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -269,7 +269,7 @@ export default function Main({ user, onLogout }) {
           </button>
         </header>
 
-        <div className="credit-top"><p className="credit-card"><Logo size={22} /> <span>{t("credit")}</span></p></div>
+        <div className="credit-top"><p className="credit-card"><Logo size={22} /> <Credit /></p></div>
 
         <div className="list">
           {notif === "unsupported" && (
@@ -373,7 +373,7 @@ export default function Main({ user, onLogout }) {
           />
         ) : (
           <div className="pick">
-            <div><p className="credit-pill soft" style={{ marginTop: 0, marginBottom: 16 }}><Logo size={20} /> {t("credit")}</p><p>{t("pickChat")}</p></div>
+            <div><p className="credit-pill soft" style={{ marginTop: 0, marginBottom: 16 }}><Logo size={20} /> <Credit /></p><p>{t("pickChat")}</p></div>
           </div>
         )}
       </section>

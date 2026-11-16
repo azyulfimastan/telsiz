@@ -183,3 +183,79 @@ export function ThemeSwitch() {
     </div>
   );
 }
+
+// "Ahmet Kula tarafından geliştirilmiştir": çevresi eski Roma yazısı, isim sade
+export function Credit() {
+  const { t } = useI18n();
+  return (
+    <span className="credit-line" aria-label={t("credit")}>
+      {t("creditPre") && <span className="roman">{t("creditPre")}</span>}
+      <span className="plain-name">{t("creditName")}</span>
+      {t("creditPost") && <span className="roman">{t("creditPost")}</span>}
+    </span>
+  );
+}
+
+// Harfler tek tek yukarıdan süzülerek belirir (açılış yazısı)
+function Typed({ text, start, step = 60, className = "" }) {
+  const words = text.split(" ");
+  let i = 0;
+  return (
+    <span className={className}>
+      {words.map((w, wi) => (
+        <span key={wi} className="tw">
+          {[...w].map((ch) => {
+            const d = start + step * i++;
+            return <span key={i} className="tl" style={{ animationDelay: d + "ms" }}>{ch}</span>;
+          })}
+          {wi < words.length - 1 && (i++, " ")}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function TypedCredit({ start }) {
+  const { t } = useI18n();
+  const pre = t("creditPre"), name = t("creditName"), post = t("creditPost");
+  const step = 55;
+  let at = start;
+  const part = (txt, cls) => {
+    if (!txt) return null;
+    const el = <Typed key={cls + txt} text={txt} start={at} step={step} className={cls} />;
+    at += (txt.length + 1) * step;
+    return el;
+  };
+  return (
+    <span className="credit-line" aria-label={t("credit")}>
+      {part(pre, "roman")}
+      {part(name, "plain-name")}
+      {part(post, "roman")}
+    </span>
+  );
+}
+
+// Uygulama açılışında kısa karşılama ekranı (oturum başına bir kez)
+export function Splash() {
+  const [phase, setPhase] = useState("off");
+  useEffect(() => {
+    let seen = false;
+    try { seen = sessionStorage.getItem("splash") === "1"; sessionStorage.setItem("splash", "1"); } catch {}
+    if (seen) return;
+    setPhase("on");
+    const a = setTimeout(() => setPhase("out"), 5200);
+    const b = setTimeout(() => setPhase("off"), 5800);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, []);
+  if (phase === "off") return null;
+  return (
+    <div className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
+      <div className="splash-in">
+        <div className="splash-logo"><Logo size={92} /></div>
+        <h1 className="display splash-title"><Typed text="Telsiz" start={500} step={170} /></h1>
+        <div className="splash-rule" />
+        <p className="splash-credit"><TypedCredit start={2000} /></p>
+      </div>
+    </div>
+  );
+}

@@ -6,7 +6,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import Main from "./Main";
-import { Icon, LangSwitch, Logo, ThemeSwitch } from "./ui";
+import { Credit, Icon, LangSwitch, Logo, Splash, ThemeSwitch } from "./ui";
 import { useI18n } from "@/lib/i18n";
 
 function GoogleG() {
@@ -20,7 +20,7 @@ function GoogleG() {
   );
 }
 
-export default function Page() {
+function Inner() {
   const [user, setUser] = useState(undefined);
   const [err, setErr] = useState("");
   const { t } = useI18n();
@@ -66,12 +66,12 @@ export default function Page() {
   if (!user)
     return (
       <main className="login">
-        <p className="credit-pill"><Logo size={20} /> {t("credit")}</p>
         <div className="login-box">
           <div className="brand">
             <Logo size={48} />
-            <h1>Telsiz</h1>
+            <h1 className="display">Telsiz</h1>
           </div>
+          <p className="login-credit"><Credit /></p>
           <p>{t("tagline")}</p>
           <button className="btn-google" onClick={login}>
             <GoogleG /> {t("googleLogin")}
@@ -95,6 +95,15 @@ export default function Page() {
         </p>
       )}
       <Main user={user} onLogout={() => signOut(auth)} />
+    </>
+  );
+}
+
+export default function Page() {
+  return (
+    <>
+      <Splash />
+      <Inner />
     </>
   );
 }
