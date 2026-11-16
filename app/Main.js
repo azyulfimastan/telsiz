@@ -451,7 +451,16 @@ function Chat({ me, friend, onBack, onRead }) {
   const seen = presence?.lastSeen?.toMillis?.() || 0;
   const status = !seen || now - seen > 70000 ? "offline" : presence?.room === chatId ? "room" : "online";
   statusRef.current = status;
-  const statusLabel = { room: t("stInRoom"), online: t("stOnline"), offline: t("stOffline") }[status];
+  const lastSeenText = () => {
+    if (!seen) return "";
+    const d = new Date(seen), n = new Date(), y = new Date(n.getTime() - 86400000);
+    const hm = d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+    const day = d.toDateString() === n.toDateString() ? t("stToday") : d.toDateString() === y.toDateString() ? t("stYesterday") : d.toLocaleDateString(locale, { day: "numeric", month: "short" });
+    return t("stLastSeen", { t: day + " " + hm });
+  };
+  const statusLabel = status === "offline"
+    ? t("stOffline") + (seen ? " · " + lastSeenText() : "")
+    : { room: t("stInRoom"), online: t("stOnline") }[status];
 
   useEffect(() => {
     first.current = true;
