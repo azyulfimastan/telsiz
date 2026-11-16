@@ -374,3 +374,12 @@ body { transition: background .2s ease, color .2s ease; }
 @media (prefers-reduced-motion: reduce) { .blob, .spark, .ring, .eq i, .orb { animation: none; } .splash-tag, .eq { opacity: 1; animation: none; } }
 
 html { background: var(--grad-b, #6a63f5); }
+
+/* İmza: isim TELSIZ'e yakın büyüklükte */
+.splash-credit { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.splash-credit .credit-line { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.splash-credit .plain-name { font-size: clamp(36px, 11vw, 64px); font-weight: 600; letter-spacing: .02em; line-height: 1.1; }
+.splash-credit .roman { font-size: clamp(15px, 4.2vw, 20px); }
+.login-credit .credit-line, .login-credit { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.login-credit .plain-name { font-size: 30px; font-weight: 600; line-height: 1.1; }
+.login-credit .roman { font-size: 15px; }
