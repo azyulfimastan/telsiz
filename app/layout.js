@@ -1,3 +1,9 @@
+import "@fontsource/ibm-plex-sans/latin-400.css";
+import "@fontsource/ibm-plex-sans/latin-500.css";
+import "@fontsource/ibm-plex-sans/latin-600.css";
+import "@fontsource/ibm-plex-sans/latin-ext-400.css";
+import "@fontsource/ibm-plex-sans/latin-ext-500.css";
+import "@fontsource/ibm-plex-sans/latin-ext-600.css";
 import "./globals.css";
 
 export const metadata = {
@@ -8,7 +14,7 @@ export const metadata = {
   appleWebApp: { capable: true, title: "Telsiz", statusBarStyle: "black-translucent" },
 };
 
-export const viewport = { themeColor: "#0f172a" };
+export const viewport = { themeColor: "#0e1218" };
 
 export default function RootLayout({ children }) {
   return (
