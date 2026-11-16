@@ -348,6 +348,9 @@ export default function Main({ user, onLogout }) {
             </button>
           ) : (
             <form className="add-form" onSubmit={sendRequest}>
+              <button type="button" className="icon-btn" onClick={() => { setAddOpen(false); setEmail(""); }} aria-label={t("backToList")}>
+                <Icon name="back" />
+              </button>
               <input
                 className="field"
                 type="email"
