@@ -316,14 +316,14 @@ function Chat({ me, friend, onBack, onRead }) {
     setErr("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+      const mr = new MediaRecorder(stream, { audioBitsPerSecond: 24000 });
       chunks.current = [];
       mr.ondataavailable = (ev) => ev.data.size && chunks.current.push(ev.data);
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
         const blob = new Blob(chunks.current, { type: mr.mimeType });
-        if (blob.size > 700_000) return setErr("Kayıt çok uzun. En fazla 30 saniye kaydedebilirsin.");
+        if (blob.size > 700_000) return setErr("Kayıt çok uzun. En fazla 60 saniye kaydedebilirsin.");
         const audio = await new Promise((res) => {
           const fr = new FileReader();
           fr.onload = () => res(fr.result);
@@ -342,7 +342,7 @@ function Chat({ me, friend, onBack, onRead }) {
       startedAt.current = Date.now();
       mr.start();
       setRec(true);
-      limitTimer.current = setTimeout(stopRec, 30000);
+      limitTimer.current = setTimeout(stopRec, 60000);
     } catch {
       setErr("Mikrofon izni gerekli. Tarayıcı adres çubuğundan mikrofona izin ver.");
     }
