@@ -260,23 +260,6 @@ function Orb({ size = 92 }) {
   );
 }
 
-export function IntroSwitch() {
-  const { t } = useI18n();
-  const [cur, setCur] = useState("classic");
-  useEffect(() => { try { setCur(localStorage.getItem("intro") || "classic"); } catch {} }, []);
-  const opts = [["classic", "introClassic"], ["scroll", "introScroll"], ["minimal", "introMinimal"]];
-  return (
-    <div className="lang intro-sw" role="group" aria-label={t("intro")}>
-      {opts.map(([id, key]) => (
-        <button key={id} type="button" className={"lang-btn" + (cur === id ? " on" : "")} aria-pressed={cur === id}
-          onClick={() => { setCur(id); try { localStorage.setItem("intro", id); } catch {} }}>
-          {t(key)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function Splash() {
   const { t, setLang } = useI18n();
   const [phase, setPhase] = useState("off");
@@ -285,7 +268,7 @@ export function Splash() {
 
   useEffect(() => {
     let st = "classic", ch = false;
-    try { st = localStorage.getItem("intro") || "classic"; ch = localStorage.getItem("langChosen") === "1"; } catch {}
+    try { ch = localStorage.getItem("langChosen") === "1"; } catch {}
     setStyle(st); setChosen(ch); setPhase("show");
   }, []);
 
