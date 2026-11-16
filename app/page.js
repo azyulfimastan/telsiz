@@ -82,6 +82,7 @@ export default function Page() {
           )}
           <LangSwitch />
           <ThemeSwitch />
+          <p className="credit">{t("credit")}</p>
         </div>
       </main>
     );

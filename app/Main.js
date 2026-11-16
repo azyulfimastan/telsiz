@@ -288,7 +288,7 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /></div>
+          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /><p className="credit">{t("credit")}</p></div>
         </div>
       </aside>
 
