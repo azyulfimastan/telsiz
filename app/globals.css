@@ -268,7 +268,8 @@ body { transition: background .2s ease, color .2s ease; }
 .credit-top { padding: 10px 10px 0; flex-shrink: 0; }
 
 .brand { display: flex; align-items: center; gap: 14px; }
-.brand h1 { font-size: 46px; }
+.brand h1 { font-size: 34px; white-space: nowrap; }
+.brand { min-width: 0; }
 
 .btn-sm.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
 .diag-box { width: 100%; max-width: 420px; max-height: 80dvh; overflow-y: auto; background: var(--surface); color: var(--text); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); align-self: center; }
@@ -286,7 +287,7 @@ body { transition: background .2s ease, color .2s ease; }
 .tick.read { color: #22c55e; opacity: 1; font-weight: 700; }
 
 /* Eski Roma yazısı (Cinzel) + sade isim */
-.display { font-family: "Great Vibes", "Cinzel Decorative", Georgia, cursive; font-weight: 400; letter-spacing: .02em; line-height: 1.1; }
+.display { font-family: "Cinzel Decorative", "Cinzel", Georgia, serif; font-weight: 700; letter-spacing: .08em; line-height: 1.1; }
 .roman { font-family: "Cinzel", Georgia, serif; font-weight: 600; letter-spacing: .07em; }
 .plain-name { font-family: "IBM Plex Sans", system-ui, sans-serif; font-weight: 600; letter-spacing: .01em; }
 .credit-line { display: inline-flex; flex-wrap: wrap; gap: 4px 7px; align-items: baseline; justify-content: center; }
@@ -297,11 +298,12 @@ body { transition: background .2s ease, color .2s ease; }
 
 .splash {
   position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; text-align: center; color: #fff;
-  background: linear-gradient(155deg, var(--grad-a), var(--grad-b)); transition: opacity .6s ease;
+  --grad-a: #ec4899; --grad-b: #f97316; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 0%, #ff7eb6 0%, #ff4f9a 45%, #d93a86 100%); transition: opacity .8s ease, transform .8s ease;
 }
-.splash.out { opacity: 0; pointer-events: none; }
+.splash.out { opacity: 0; transform: scale(1.18); pointer-events: none; }
 .splash-in { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px; }
-.splash-title { font-size: clamp(64px, 18vw, 108px); line-height: 1.05; text-shadow: 0 4px 24px rgba(0, 0, 0, .22); }
+.splash-title { font-size: clamp(46px, 13vw, 80px); line-height: 1.05; text-shadow: 0 4px 24px rgba(0, 0, 0, .22); }
 .splash-rule { width: 120px; height: 2px; background: rgba(255, 255, 255, .7); border-radius: 2px; }
 .splash-credit { font-size: 15px; color: rgba(255, 255, 255, .95); }
 .splash-credit .roman { font-size: 19px; }
@@ -334,3 +336,41 @@ body { transition: background .2s ease, color .2s ease; }
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); -webkit-tap-highlight-color: transparent;
 }
 .lang-pick-btn:hover, .lang-pick-btn:active { background: rgba(255, 255, 255, .34); }
+
+/* --- Açılış: pembe sahne, dalgalar, parıltılar --- */
+.sp-bg { position: absolute; inset: 0; overflow: hidden; }
+.sp-bg .blob { position: absolute; border-radius: 50%; filter: blur(50px); opacity: .55; animation: drift 9s ease-in-out infinite alternate; }
+.blob.b1 { width: 60vmax; height: 60vmax; left: -20vmax; top: -15vmax; background: #ffb3d4; }
+.blob.b2 { width: 55vmax; height: 55vmax; right: -22vmax; bottom: -18vmax; background: #ff8a4c; animation-delay: -3s; }
+.blob.b3 { width: 40vmax; height: 40vmax; left: 30%; top: 40%; background: #c04bff; opacity: .35; animation-delay: -6s; }
+@keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(6vmax, 5vmax) scale(1.15); } }
+.spark { position: absolute; border-radius: 50%; background: #fff; opacity: 0; box-shadow: 0 0 10px 2px rgba(255, 255, 255, .9); animation: twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4) translateY(0); } 50% { opacity: .95; transform: scale(1) translateY(-12px); } }
+.splash-in { position: relative; z-index: 1; }
+
+.orb-wrap { position: relative; width: 132px; height: 132px; display: grid; place-items: center; }
+.orb {
+  position: relative; z-index: 2; width: 116px; height: 116px; border-radius: 32px; background: #fff; display: grid; place-items: center;
+  box-shadow: 0 14px 40px rgba(120, 10, 70, .35), 0 0 0 6px rgba(255, 255, 255, .28);
+  animation: orbPop 1.1s cubic-bezier(.2, 1.4, .3, 1) both, orbGlow 2.6s ease-in-out 1.1s infinite;
+}
+@keyframes orbPop { 0% { transform: scale(0) rotate(-25deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes orbGlow { 0%, 100% { box-shadow: 0 14px 40px rgba(120, 10, 70, .35), 0 0 0 6px rgba(255, 255, 255, .28); } 50% { box-shadow: 0 14px 50px rgba(120, 10, 70, .45), 0 0 0 14px rgba(255, 255, 255, .14); } }
+.ring { position: absolute; inset: 8px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .8); opacity: 0; animation: ringOut 3.2s cubic-bezier(.2, .6, .3, 1) infinite; }
+.ring.r2 { animation-delay: .8s; } .ring.r3 { animation-delay: 1.6s; } .ring.r4 { animation-delay: 2.4s; }
+@keyframes ringOut { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(4.2); opacity: 0; } }
+
+.splash-title { text-shadow: 0 6px 30px rgba(120, 10, 70, .35); }
+.pick-title { animation: splashIn .9s cubic-bezier(.2, .7, .2, 1) .3s both; }
+.pick-hint { font-size: 15px; letter-spacing: .08em; opacity: .95; animation: splashIn .8s ease .5s both; }
+.lang-pick-btn { animation: splashIn .7s cubic-bezier(.2, .7, .2, 1) both; }
+.splash-tag { font-size: 16px; color: #fff; opacity: 0; animation: splashIn .9s ease 2.3s forwards; max-width: 300px; }
+.splash-credit { opacity: 1; }
+.eq { display: flex; align-items: flex-end; gap: 5px; height: 30px; margin-top: 6px; opacity: 0; animation: splashIn .8s ease 3.4s forwards; }
+.eq i { width: 5px; height: 100%; border-radius: 3px; background: #fff; transform-origin: bottom; animation: eqBar 1s ease-in-out infinite; }
+.eq i:nth-child(1) { animation-delay: -.1s; } .eq i:nth-child(2) { animation-delay: -.5s; } .eq i:nth-child(3) { animation-delay: -.3s; }
+.eq i:nth-child(4) { animation-delay: -.8s; } .eq i:nth-child(5) { animation-delay: -.2s; } .eq i:nth-child(6) { animation-delay: -.6s; } .eq i:nth-child(7) { animation-delay: -.4s; }
+@keyframes eqBar { 0%, 100% { transform: scaleY(.2); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .blob, .spark, .ring, .eq i, .orb { animation: none; } .splash-tag, .eq { opacity: 1; animation: none; } }
+
+html { background: var(--grad-b, #6a63f5); }

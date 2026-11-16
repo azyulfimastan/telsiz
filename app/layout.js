@@ -4,8 +4,8 @@ import "@fontsource/ibm-plex-sans/latin-600.css";
 import "@fontsource/ibm-plex-sans/latin-ext-400.css";
 import "@fontsource/ibm-plex-sans/latin-ext-500.css";
 import "@fontsource/ibm-plex-sans/latin-ext-600.css";
-import "@fontsource/great-vibes/latin-400.css";
-import "@fontsource/great-vibes/latin-ext-400.css";
+
+
 import "@fontsource/cinzel/latin-600.css";
 import "@fontsource/cinzel/latin-ext-600.css";
 import "@fontsource/cinzel-decorative/latin-700.css";
@@ -26,7 +26,7 @@ export const viewport = { themeColor: "#5b6cff", viewportFit: "cover", width: "d
 export default function RootLayout({ children }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"light"}catch(e){}` }} /></head>
+      <head><script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"pink"}catch(e){}` }} /></head>
       <body><LangProvider>{children}</LangProvider></body>
     </html>
   );

@@ -157,8 +157,8 @@ export function LangSwitch() {
 
 export function ThemeSwitch() {
   const { t } = useI18n();
-  const [cur, setCur] = useState("light");
-  useEffect(() => { setCur(document.documentElement.dataset.theme || "light"); }, []);
+  const [cur, setCur] = useState("pink");
+  useEffect(() => { setCur(document.documentElement.dataset.theme || "pink"); }, []);
   const pick = (id) => {
     setCur(id);
     document.documentElement.dataset.theme = id;
@@ -235,32 +235,41 @@ function TypedCredit({ start }) {
   );
 }
 
-// Uygulama açılışı: ilk açılışta önce dil seçilir, sonra karşılama yazısı çıkar (oturum başına bir kez)
+// Uygulama açılışı: her açılışta önce dil seçilir, sonra büyük karşılama animasyonu oynar
+const SPARKS = Array.from({ length: 22 }, (_, i) => ({
+  l: (i * 37 + 11) % 100, t: (i * 53 + 7) % 100, s: 4 + (i * 7) % 9, d: (i * 0.37) % 3.2, k: 2.2 + (i % 5) * 0.6,
+}));
+
+function Backdrop() {
+  return (
+    <div className="sp-bg" aria-hidden="true">
+      <i className="blob b1" /><i className="blob b2" /><i className="blob b3" />
+      {SPARKS.map((p, i) => (
+        <i key={i} className="spark" style={{ left: p.l + "%", top: p.t + "%", width: p.s, height: p.s, animationDelay: p.d + "s", animationDuration: p.k + "s" }} />
+      ))}
+    </div>
+  );
+}
+
+function Orb({ size = 92 }) {
+  return (
+    <div className="orb-wrap">
+      <i className="ring r1" /><i className="ring r2" /><i className="ring r3" /><i className="ring r4" />
+      <div className="orb"><Logo size={size} /></div>
+    </div>
+  );
+}
+
 export function Splash() {
-  const { setLang } = useI18n();
+  const { t, setLang } = useI18n();
   const [phase, setPhase] = useState("off");
 
-  useEffect(() => {
-    let chosen = false, seen = false;
-    try {
-      chosen = localStorage.getItem("langChosen") === "1";
-      seen = sessionStorage.getItem("splash") === "1";
-      sessionStorage.setItem("splash", "1");
-    } catch {}
-    if (!chosen) return setPhase("intro");
-    if (!seen) setPhase("on");
-  }, []);
-
-  useEffect(() => {
-    if (phase !== "intro") return;
-    const a = setTimeout(() => setPhase("pick"), 2700);
-    return () => clearTimeout(a);
-  }, [phase]);
+  useEffect(() => { setPhase("pick"); }, []);
 
   useEffect(() => {
     if (phase !== "on") return;
-    const a = setTimeout(() => setPhase("out"), 5200);
-    const b = setTimeout(() => setPhase("off"), 5800);
+    const a = setTimeout(() => setPhase("out"), 6800);
+    const b = setTimeout(() => setPhase("off"), 7600);
     return () => { clearTimeout(a); clearTimeout(b); };
   }, [phase]);
 
@@ -271,27 +280,17 @@ export function Splash() {
   };
 
   if (phase === "off") return null;
-  if (phase === "intro") {
-    return (
-      <div className="splash" key="intro">
-        <div className="splash-in">
-          <div className="splash-logo"><Logo size={92} /></div>
-          <h1 className="display splash-title"><Typed text="TELSIZ" start={400} step={170} /></h1>
-          <div className="splash-rule" />
-        </div>
-      </div>
-    );
-  }
   if (phase === "pick") {
     return (
-      <div className="splash">
+      <div className="splash" key="pick">
+        <Backdrop />
         <div className="splash-in">
-          <div className="splash-logo"><Logo size={84} /></div>
-          <h1 className="display splash-title" style={{ fontSize: "clamp(56px, 16vw, 84px)" }}>Telsiz</h1>
-          <div className="splash-rule" style={{ animation: "none", transform: "none" }} />
+          <Orb size={84} />
+          <h1 className="display splash-title pick-title">TELSIZ</h1>
+          <p className="pick-hint">Dil · Język · Language</p>
           <div className="lang-pick">
-            {LANGS.map((l) => (
-              <button key={l.code} className="lang-pick-btn" onClick={() => choose(l.code)}>
+            {LANGS.map((l, i) => (
+              <button key={l.code} className="lang-pick-btn" style={{ animationDelay: 0.25 + i * 0.12 + "s" }} onClick={() => choose(l.code)}>
                 {l.name}
               </button>
             ))}
@@ -302,11 +301,14 @@ export function Splash() {
   }
   return (
     <div key="main" className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
+      <Backdrop />
       <div className="splash-in">
-        <div className="splash-logo"><Logo size={92} /></div>
-        <h1 className="display splash-title"><Typed text="TELSIZ" start={500} step={170} /></h1>
+        <Orb size={92} />
+        <h1 className="display splash-title"><Typed text="TELSIZ" start={900} step={190} /></h1>
         <div className="splash-rule" />
-        <p className="splash-credit"><TypedCredit start={1800} /></p>
+        <p className="splash-tag">{t("tagline")}</p>
+        <p className="splash-credit"><TypedCredit start={3000} /></p>
+        <div className="eq" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
       </div>
     </div>
   );
