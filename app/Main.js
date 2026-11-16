@@ -17,6 +17,7 @@ export default function Main({ user, onLogout }) {
   const liveAudio = useRef(null);
   const friendsRef = useRef([]);
   const [speaker, setSpeaker] = useState(null);
+  const [blocked, setBlocked] = useState(false);
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -71,7 +72,7 @@ export default function Main({ user, onLogout }) {
       if (!from) return setSpeaker(null);
       const f = friendsRef.current.find((x) => x.uid === from);
       setSpeaker(f?.name || t("friend"));
-    });
+    }, setBlocked);
   }, [user.uid]);
 
   // Çevrimiçi / odada durumu: düzenli kalp atışı
@@ -291,7 +292,15 @@ export default function Main({ user, onLogout }) {
         </div>
       </aside>
 
-      {speaker && (
+      {blocked && (
+        <button
+          className="live-banner tap"
+          onClick={() => liveAudio.current?.play().then(() => setBlocked(false)).catch(() => {})}
+        >
+          <Icon name="mic" size={18} /> {t("tapSound")}
+        </button>
+      )}
+      {speaker && !blocked && (
         <div className="live-banner" role="status">
           <span className="rec-dot" /> {t("speaking", { name: speaker })}
         </div>
@@ -325,6 +334,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const [sec, setSec] = useState(0);
   const [err, setErr] = useState("");
   const [liveState, setLiveState] = useState("");
+  const [diag, setDiag] = useState("");
   const [presence, setPresence] = useState(null);
   const [now, setNow] = useState(Date.now());
   const endRef = useRef(null);
@@ -481,6 +491,12 @@ function Chat({ me, friend, onBack, onRead }) {
         const lv = liveRef.current;
         liveRef.current = null;
         const wasLive = !!lv?.heard; // karşı taraf sesi gerçekten çaldı mı
+        if (Date.now() - startedAt.current >= 500) {
+          const why = wasLive ? "diagLive" : !lv ? (statusRef.current === "offline" ? "diagOffline" : "diagNoStart")
+            : !lv.answered ? "diagNoAnswer" : lv.state !== "connected" ? "diagNoConnect" : "diagNotHeard";
+          setDiag(why);
+          setTimeout(() => setDiag(""), 9000);
+        }
         lv?.stop();
         setLiveState("");
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
@@ -644,6 +660,7 @@ function Chat({ me, friend, onBack, onRead }) {
           </div>
           {!rec && <p className="hint">{t("hint")}</p>}
           {rec && locked && <p className="hint">{t("lockedHint")}</p>}
+          {!rec && diag && <p className={"hint diag " + (diag === "diagLive" ? "ok" : "warn")}>{t(diag)}</p>}
         </div>
       </div>
     </>

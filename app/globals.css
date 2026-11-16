@@ -233,3 +233,8 @@ body { transition: background .2s ease, color .2s ease; }
 .theme-dot.on { border-color: var(--surface); box-shadow: 0 0 0 2px var(--text); }
 .login .theme-sw { justify-content: center; }
 .side-foot { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+
+.live-banner.tap { cursor: pointer; background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); color: #fff; border: 0; font-weight: 600; }
+.hint.diag { max-width: 340px; font-weight: 500; }
+.hint.diag.ok { color: #16a34a; }
+.hint.diag.warn { color: var(--err-ink); }
