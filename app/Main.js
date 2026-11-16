@@ -479,7 +479,7 @@ function Chat({ me, friend, onBack, onRead }) {
         stream.getTracks().forEach((tr) => tr.stop());
         const lv = liveRef.current;
         liveRef.current = null;
-        const wasLive = !!lv?.answered;
+        const wasLive = !!lv?.heard; // karşı taraf sesi gerçekten çaldı mı
         lv?.stop();
         setLiveState("");
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
