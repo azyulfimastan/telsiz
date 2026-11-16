@@ -425,3 +425,5 @@ html { background: var(--grad-b, #6a63f5); }
 .splash-langs .pick-hint { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; opacity: 1; letter-spacing: 0; }
 .splash-langs .pick-hint b { font-size: 22px; font-weight: 700; letter-spacing: .01em; text-shadow: 0 2px 12px rgba(120, 10, 70, .35); }
 .splash-langs .pick-hint span { opacity: .9; }
+.splash-langs .pick-hint { gap: 3px; font-size: 16px; font-weight: 500; }
+.splash-langs .pick-hint span { opacity: 1; font-size: 16px; font-weight: 500; }

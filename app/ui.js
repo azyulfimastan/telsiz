@@ -386,7 +386,7 @@ export function Splash() {
         )}
       </div>
       <div className={"splash-langs" + (phase === "show" ? "" : " gone")}>
-        <div className="pick-hint"><b>Dil seçiniz</b><span>Wybierz język · Select language</span></div>
+        <div className="pick-hint"><span>Dil seçiniz</span><span>Wybierz język</span><span>Select language</span></div>
         <div className="lang-row">
           {LANGS.map((l) => (
             <button key={l.code} className="lang-pick-btn" onClick={(e) => choose(e, l.code)}>{l.name}</button>
