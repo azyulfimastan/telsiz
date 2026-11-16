@@ -260,25 +260,47 @@ function Orb({ size = 92 }) {
   );
 }
 
+// Telsiz "çıt-pşşt" sesi: dokunuşla tetiklenir, iPhone'da da çalar
+function radioClick() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const now = ctx.currentTime;
+    const g = ctx.createGain(); g.gain.value = 0.18; g.connect(ctx.destination);
+    const click = ctx.createOscillator(); click.type = "square"; click.frequency.value = 1800;
+    const cg = ctx.createGain(); cg.gain.setValueAtTime(0.5, now); cg.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    click.connect(cg); cg.connect(g); click.start(now); click.stop(now + 0.05);
+    const len = Math.floor(ctx.sampleRate * 0.22), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const n = ctx.createBufferSource(); n.buffer = buf;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 0.7;
+    n.connect(bp); bp.connect(g); n.start(now + 0.03);
+    const beep = ctx.createOscillator(); beep.frequency.value = 1250;
+    const bg = ctx.createGain(); bg.gain.setValueAtTime(0.0001, now + 0.26); bg.gain.exponentialRampToValueAtTime(0.35, now + 0.28); bg.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    beep.connect(bg); bg.connect(g); beep.start(now + 0.26); beep.stop(now + 0.42);
+    setTimeout(() => ctx.close(), 700);
+  } catch {}
+}
+
 export function Splash() {
   const { t, setLang } = useI18n();
   const [phase, setPhase] = useState("off");
-  const [style, setStyle] = useState("classic");
   const [chosen, setChosen] = useState(false);
 
   useEffect(() => {
-    let st = "classic", ch = false;
+    let ch = false;
     try { ch = localStorage.getItem("langChosen") === "1"; } catch {}
-    setStyle(st); setChosen(ch); setPhase("show");
+    setChosen(ch); setPhase("show");
   }, []);
 
   // İlk kez açılıyorsa dil seçilene kadar bekler; sonrasında kendiliğinden geçer
   useEffect(() => {
     if (phase !== "show" || !chosen) return;
-    const ms = style === "scroll" ? 4800 : 3600;
+    const ms = 3600;
     const a = setTimeout(() => setPhase("out"), ms);
     return () => clearTimeout(a);
-  }, [phase, chosen, style]);
+  }, [phase, chosen]);
 
   useEffect(() => {
     if (phase !== "out") return;
@@ -288,6 +310,7 @@ export function Splash() {
 
   const choose = (e, code) => {
     e.stopPropagation();
+    radioClick();
     setLang(code);
     try { localStorage.setItem("langChosen", "1"); } catch {}
     setChosen(true);
@@ -296,22 +319,10 @@ export function Splash() {
 
   if (phase === "off") return null;
   return (
-    <div className={"splash intro-" + style + (phase === "out" ? " out" : "")} onClick={() => chosen && setPhase("out")}>
+    <div className={"splash" + (phase === "out" ? " out" : "")} onClick={() => chosen && setPhase("out")}>
       <Backdrop />
       <div className="splash-in">
-        {style === "scroll" ? (
-          <div className="scroll">
-            <i className="rod top" /><i className="rod bot" />
-            <div className="paper">
-              <div className="paper-in">
-                <h1 className="ink-title"><InkLine at={0.7} dur={0.9}>Telsiz</InkLine></h1>
-                <p className="ink-tag">{t("tagline")}</p>
-                <InkCredit at={1.7} />
-                <div className="seal"><Logo size={26} /></div>
-              </div>
-            </div>
-          </div>
-        ) : (
+        {(
           <>
             <Orb size={84} />
             <h1 className="display splash-title"><Typed text="TELSIZ" start={300} step={90} /></h1>
@@ -329,45 +340,6 @@ export function Splash() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function Quill() {
-  return (
-    <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
-      <path d="M60 3C42 6 24 20 13 44l-3 9 9-4C40 41 55 25 60 3z" fill="#fff8ee" stroke="#8a5a33" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M10 53L56 8" stroke="#8a5a33" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M14 42l8 3M20 33l9 3M28 24l9 3M37 16l8 3" stroke="#d9b98a" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M10 53l-5 8 9-4z" fill="#2b1840" />
-    </svg>
-  );
-}
-
-function InkLine({ children, at, dur, className = "" }) {
-  return (
-    <span className={"ink-line " + className} style={{ "--at": at + "s", "--dur": dur + "s" }}>
-      <span className="ink-text">{children}</span>
-      <span className="quill"><i><Quill /></i></span>
-    </span>
-  );
-}
-
-function InkCredit({ at }) {
-  const { t } = useI18n();
-  const pre = t("creditPre"), name = t("creditName"), post = t("creditPost");
-  let c = at;
-  const line = (txt, cls, dur) => {
-    if (!txt) return null;
-    const el = <div key={cls + txt} className="ink-row"><InkLine at={c} dur={dur} className={cls}>{txt}</InkLine></div>;
-    c += dur + 0.05;
-    return el;
-  };
-  return (
-    <div className="ink-credit" aria-label={t("credit")}>
-      {line(pre, "ink-small", 0.5)}
-      {line(name, "ink-name", 0.7)}
-      {line(post, "ink-small", 0.6)}
     </div>
   );
 }

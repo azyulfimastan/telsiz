@@ -6,7 +6,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import Main from "./Main";
-import { Credit, Icon, LangSwitch, Logo, Splash, ThemeSwitch } from "./ui";
+import { Credit, Icon, Logo, Splash } from "./ui";
 import { useI18n } from "@/lib/i18n";
 
 function GoogleG() {
@@ -81,8 +81,6 @@ function Inner() {
               <Icon name="alert" size={16} /> <span>{err}</span>
             </p>
           )}
-          <LangSwitch />
-          <ThemeSwitch />
         </div>
       </main>
     );
