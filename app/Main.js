@@ -54,7 +54,7 @@ export default function Main({ user, onLogout }) {
         v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
         v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
         w(36, "data"); v.setUint32(40, n * 2, true);
-        for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.round((Math.random() - 0.5) * 6), true);
+        for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, 0, true);
         ka = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" })));
         ka.loop = true;
         ka.play().catch(() => { ka = null; });
