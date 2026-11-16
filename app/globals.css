@@ -415,3 +415,5 @@ html { background: var(--grad-b, #6a63f5); }
 .ver-tag { top: calc(21px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); }
 .side-head, .chat-head { padding-right: calc(72px + env(safe-area-inset-right)); }
 .splash-langs.gone { opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .3s ease, transform .3s ease; animation: none; }
+.ver-tag { font-size: 12px; }
+.side-head, .chat-head { padding-right: calc(104px + env(safe-area-inset-right)); }
