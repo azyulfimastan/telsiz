@@ -14,7 +14,7 @@ import { Credit, Avatar, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceM
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
 export default function Main({ user, onLogout }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const liveAudio = useRef(null);
   const friendsRef = useRef([]);
   const activeRef = useRef(null);
@@ -24,6 +24,7 @@ export default function Main({ user, onLogout }) {
   const [speaker, setSpeaker] = useState(null);
   const [blocked, setBlocked] = useState(false);
   const [diagOpen, setDiagOpen] = useState(false);
+  const [setOpen, setSetOpen] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendsReady, setFriendsReady] = useState(false);
   const [incoming, setIncoming] = useState([]);
@@ -246,6 +247,13 @@ export default function Main({ user, onLogout }) {
     }
   }
 
+  const when = (ms) => {
+    if (!ms) return "";
+    const d = new Date(ms), now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
+  };
+
   const preview = (f) =>
     !f.lastAt ? f.email : (f.lastFrom === user.uid ? t("you") : "") + (f.lastKind === "voice" ? t("voiceMsg") : t("message"));
 
@@ -311,7 +319,10 @@ export default function Main({ user, onLogout }) {
                 <div className="name" style={isUnread(f) ? { fontWeight: 600 } : undefined}>{f.name || t("friend")}</div>
                 <div className="sub">{preview(f)}</div>
               </div>
-              {isUnread(f) && <span className="badge" aria-label={t("unread")}>{f.unread > 99 ? "99+" : f.unread}</span>}
+              <div className="item-end">
+                <span className={"item-time" + (isUnread(f) ? " unread" : "")}>{when(f.lastAt)}</span>
+                {isUnread(f) && <span className="badge" aria-label={t("unread")}>{f.unread > 99 ? "99+" : f.unread}</span>}
+              </div>
             </button>
           ))}
 
@@ -347,7 +358,17 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot"><div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div><div className="theme-row"><ThemeSwitch /><ModeSwitch /></div></div>
+          <div className="side-foot">
+            <button type="button" className={"set-toggle" + (setOpen ? " open" : "")} onClick={() => setSetOpen((v) => !v)} aria-expanded={setOpen}>
+              <Icon name="gear" size={18} /> {t("settings")}
+            </button>
+            {setOpen && (
+              <div className="set-panel">
+                <div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div>
+                <div className="theme-row"><ThemeSwitch /><ModeSwitch /></div>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
