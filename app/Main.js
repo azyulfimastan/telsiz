@@ -5,6 +5,7 @@ import {
   serverTimestamp, setDoc, updateDoc, where, limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -14,6 +15,21 @@ export default function Main({ user, onLogout }) {
   const [email, setEmail] = useState("");
   const [info, setInfo] = useState("");
   const [active, setActive] = useState(null);
+  const [, setTick] = useState(0);
+  const [notif, setNotif] = useState("default");
+
+  useEffect(() => {
+    if (!pushSupported()) return setNotif("unsupported");
+    setNotif(Notification.permission);
+    if (Notification.permission === "granted") enablePush(user.uid, { ask: false }).catch(() => {});
+  }, [user.uid]);
+
+  async function turnOnNotif() {
+    try { setNotif(await enablePush(user.uid)); } catch { setNotif("denied"); }
+  }
+
+  const readAt = (uid) => Number(localStorage.getItem("read_" + chatIdOf(user.uid, uid)) || 0);
+  const isUnread = (f) => f.lastFrom && f.lastFrom !== user.uid && f.lastAt > readAt(f.uid);
 
   // Gelen istekler
   useEffect(() => {
@@ -37,9 +53,16 @@ export default function Main({ user, onLogout }) {
         snap.docs.map(async (d) => {
           const other = d.data().members.find((m) => m !== user.uid);
           const u = await getDoc(doc(db, "users", other));
-          return { uid: other, name: u.data()?.name || "Arkadaş", email: u.data()?.email || "" };
+          return {
+            uid: other,
+            name: u.data()?.name || "Arkadaş",
+            email: u.data()?.email || "",
+            lastAt: d.data().lastAt?.toMillis?.() || 0,
+            lastFrom: d.data().lastFrom || "",
+          };
         })
       );
+      list.sort((a, b) => b.lastAt - a.lastAt);
       setFriends(list);
     });
   }, [user.uid]);
@@ -71,8 +94,17 @@ export default function Main({ user, onLogout }) {
       <aside className="side">
         <header>
           <strong>📻 {user.displayName?.split(" ")[0] || "Telsiz"}</strong>
-          <button onClick={onLogout}>Çıkış</button>
+          <span style={{ display: "flex", gap: 6 }}>
+            {notif === "default" && <button className="primary" onClick={turnOnNotif}>🔔 Bildirim aç</button>}
+            {notif === "denied" && <small className="muted">🔕 Bildirim engelli</small>}
+            <button onClick={onLogout}>Çıkış</button>
+          </span>
         </header>
+        {notif === "unsupported" && (
+          <p className="muted" style={{ padding: "6px 14px" }}>
+            Bildirim için iPhone'da siteyi "Ana ekrana ekle" ile kur.
+          </p>
+        )}
         <div className="list">
           {incoming.map((r) => (
             <div className="row" key={r.id}>
@@ -83,7 +115,7 @@ export default function Main({ user, onLogout }) {
           {friends.length === 0 && <p className="muted" style={{ padding: 8 }}>Henüz arkadaş yok. Aşağıdan e-posta ile ekle.</p>}
           {friends.map((f) => (
             <div key={f.uid} className={"row" + (active?.uid === f.uid ? " active" : "")} onClick={() => setActive(f)} style={{ cursor: "pointer" }}>
-              <span>{f.name}<br /><small>{f.email}</small></span>
+              <span>{isUnread(f) && "🔴 "}{f.name}<br /><small>{f.email}</small></span>
             </div>
           ))}
         </div>
@@ -94,13 +126,13 @@ export default function Main({ user, onLogout }) {
         {info && <p className="muted" style={{ padding: "0 10px 10px" }}>{info}</p>}
       </aside>
       <section className="chat">
-        {active ? <Chat key={active.uid} me={user} friend={active} onBack={() => setActive(null)} /> : <div className="center muted">Bir arkadaş seç</div>}
+        {active ? <Chat key={active.uid} me={user} friend={active} onBack={() => setActive(null)} onRead={() => setTick((t) => t + 1)} /> : <div className="center muted">Bir arkadaş seç</div>}
       </section>
     </div>
   );
 }
 
-function Chat({ me, friend, onBack }) {
+function Chat({ me, friend, onBack, onRead }) {
   const chatId = chatIdOf(me.uid, friend.uid);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
@@ -130,7 +162,16 @@ function Chat({ me, friend, onBack }) {
     });
   }, [chatId, me.uid]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    localStorage.setItem("read_" + chatId, String(Date.now()));
+    onRead?.();
+  }, [msgs]);
+
+  async function afterSend(kind) {
+    await updateDoc(doc(db, "chats", chatId), { lastAt: serverTimestamp(), lastFrom: me.uid, lastKind: kind });
+    notifyUser(friend.uid, me.displayName || "Telsiz", kind === "voice" ? "🎙️ Sesli mesaj" : "💬 Yeni mesaj");
+  }
 
   async function sendText() {
     const t = text.trim();
@@ -139,6 +180,7 @@ function Chat({ me, friend, onBack }) {
     await addDoc(collection(db, "chats", chatId, "messages"), {
       from: me.uid, type: "text", text: t, createdAt: serverTimestamp(),
     });
+    afterSend("text");
   }
 
   async function startRec(e) {
@@ -162,6 +204,7 @@ function Chat({ me, friend, onBack }) {
         await addDoc(collection(db, "chats", chatId, "messages"), {
           from: me.uid, type: "voice", audio, createdAt: serverTimestamp(),
         });
+        afterSend("voice");
       };
       recorder.current = mr;
       startedAt.current = Date.now();
@@ -188,6 +231,9 @@ function Chat({ me, friend, onBack }) {
         {msgs.map((m) => (
           <div key={m.id} className={"msg" + (m.from === me.uid ? " me" : "")}>
             {m.type === "voice" ? <audio controls src={m.audio} /> : m.text}
+            <div className="muted" style={{ fontSize: 11, textAlign: "right" }}>
+              {m.createdAt?.toDate?.().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
           </div>
         ))}
         <div ref={endRef} />
