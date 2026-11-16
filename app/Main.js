@@ -334,6 +334,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const first = useRef(true);
   const pressed = useRef(false);
   const lockedRef = useRef(false);
+  const wakeRef = useRef(null);
   const [delId, setDelId] = useState(null);
   const pressTimer = useRef(null);
   const longFired = useRef(false);
@@ -376,6 +377,41 @@ function Chat({ me, friend, onBack, onRead }) {
     localStorage.setItem("read_" + chatId, String(Date.now()));
     onRead?.();
   }, [msgs]);
+
+  // Kilitli yayın: ekran uyumasın, arka plandan dönünce kilidi yenile, bildirimden durdurulabilsin
+  useEffect(() => {
+    if (!locked) return;
+    const getLock = async () => {
+      try {
+        if (document.visibilityState === "visible" && navigator.wakeLock && !wakeRef.current) {
+          wakeRef.current = await navigator.wakeLock.request("screen");
+          wakeRef.current.addEventListener?.("release", () => { wakeRef.current = null; });
+        }
+      } catch {}
+    };
+    getLock();
+    document.addEventListener("visibilitychange", getLock);
+    const ms = "mediaSession" in navigator ? navigator.mediaSession : null;
+    try {
+      if (ms) {
+        ms.metadata = new MediaMetadata({ title: "Telsiz", artist: t("lockOnAir", { name: friend.name || t("friend") }) });
+        ms.setActionHandler("pause", () => stopRec());
+        ms.setActionHandler("stop", () => stopRec());
+      }
+    } catch {}
+    return () => {
+      document.removeEventListener("visibilitychange", getLock);
+      try { wakeRef.current?.release(); } catch {}
+      wakeRef.current = null;
+      try {
+        if (ms) {
+          ms.setActionHandler("pause", null);
+          ms.setActionHandler("stop", null);
+          ms.metadata = new MediaMetadata({ title: "Telsiz", artist: "Canlı telsiz açık" });
+        }
+      } catch {}
+    };
+  }, [locked]);
 
   useEffect(() => {
     document.body.classList.toggle("talking", rec);
