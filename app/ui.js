@@ -306,21 +306,10 @@ function radioClick() {
 export function Splash() {
   const { t, setLang } = useI18n();
   const [phase, setPhase] = useState("off");
-  const [chosen, setChosen] = useState(false);
 
   useEffect(() => {
-    let ch = false;
-    try { ch = localStorage.getItem("langChosen") === "1"; } catch {}
-    setChosen(ch); setPhase("show");
+    setPhase("show");
   }, []);
-
-  // İlk kez açılıyorsa dil seçilene kadar bekler; sonrasında kendiliğinden geçer
-  useEffect(() => {
-    if (phase !== "show" || !chosen) return;
-    const ms = 3600;
-    const a = setTimeout(() => setPhase("out"), ms);
-    return () => clearTimeout(a);
-  }, [phase, chosen]);
 
   useEffect(() => {
     if (phase !== "out") return;
@@ -333,13 +322,12 @@ export function Splash() {
     radioClick();
     setLang(code);
     try { localStorage.setItem("langChosen", "1"); } catch {}
-    setChosen(true);
     setPhase("out");
   };
 
   if (phase === "off") return null;
   return (
-    <div className={"splash" + (phase === "out" ? " out" : "")} onClick={() => chosen && setPhase("out")}>
+    <div className={"splash" + (phase === "out" ? " out" : "")} >
       <Backdrop />
       <div className="splash-in">
         {(
