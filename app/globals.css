@@ -505,3 +505,13 @@ button { -webkit-tap-highlight-color: transparent; transition: transform .12s ea
 .item-time { font-size: 12px; color: var(--muted); }
 .item-time.unread { color: var(--accent); font-weight: 600; }
 @media (display-mode: standalone) { .app { height: 100vh; } .splash { height: 100vh; } html, body { background: var(--surface); } }
+
+/* --- v2.4: taşma ve üst üste binme düzeltmesi --- */
+html, body { max-width: 100%; overflow-x: hidden; }
+.app { grid-template-columns: minmax(0, 340px) minmax(0, 1fr); }
+@media (max-width: 720px) { .app { grid-template-columns: minmax(0, 1fr); } }
+.side, .chat, .list, .add, .side-foot, .set-panel { min-width: 0; max-width: 100%; }
+.add-row, .theme-row { flex-wrap: wrap; row-gap: 8px; }
+.credit-card { max-width: 100%; flex-wrap: wrap; }
+.side-head, .chat-head { padding-right: calc(104px + env(safe-area-inset-right)); }
+.side-head .who { min-width: 0; }
