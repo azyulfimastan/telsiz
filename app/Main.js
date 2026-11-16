@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import {
   addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query,
-  serverTimestamp, setDoc, updateDoc, where, limit,
+  serverTimestamp, setDoc, updateDoc, where, limit, increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { listenLive, liveSupported, startLive } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
+import Diag from "./Diag";
 import { Avatar, Icon, LangSwitch, Logo, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
@@ -16,8 +17,13 @@ export default function Main({ user, onLogout }) {
   const { t } = useI18n();
   const liveAudio = useRef(null);
   const friendsRef = useRef([]);
+  const activeRef = useRef(null);
+  const prevChats = useRef(null);
+  const ctxRef = useRef(null);
+  const [presence, setPresence] = useState({});
   const [speaker, setSpeaker] = useState(null);
   const [blocked, setBlocked] = useState(false);
+  const [diagOpen, setDiagOpen] = useState(false);
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -56,6 +62,10 @@ export default function Main({ user, onLogout }) {
       } catch {}
     };
     const unlock = () => {
+      try {
+        if (!ctxRef.current) ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        ctxRef.current.resume();
+      } catch {}
       el.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
       el.play().catch(() => {}).finally(() => { el.removeAttribute("src"); el.load(); });
       keepAlive();
@@ -64,6 +74,35 @@ export default function Main({ user, onLogout }) {
     window.addEventListener("pointerdown", unlock);
     return () => window.removeEventListener("pointerdown", unlock);
   }, []);
+
+  const beep = () => {
+    try {
+      const c = ctxRef.current;
+      if (!c) return;
+      const o = c.createOscillator(), g = c.createGain();
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.18, c.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.3);
+      o.connect(g); g.connect(c.destination);
+      o.start(); o.stop(c.currentTime + 0.32);
+    } catch {}
+  };
+
+  useEffect(() => { activeRef.current = active; }, [active]);
+
+  // Arkadaşların çevrimiçi durumu
+  const friendKey = friends.map((f) => f.uid).join(",");
+  useEffect(() => {
+    const uns = friends.map((f) =>
+      onSnapshot(doc(db, "users", f.uid), (d) =>
+        setPresence((p) => ({ ...p, [f.uid]: d.data()?.lastSeen?.toMillis?.() || 0 }))
+      )
+    );
+    const iv = setInterval(() => setTick((x) => x + 1), 20000);
+    return () => { uns.forEach((u) => u()); clearInterval(iv); };
+  }, [friendKey]);
+  const isOnline = (f) => Date.now() - (presence[f.uid] || 0) < 70000;
 
   // Canlı telsiz: gelen yayını dinle
   useEffect(() => {
@@ -104,8 +143,7 @@ export default function Main({ user, onLogout }) {
     try { setNotif(await enablePush(user.uid)); } catch { setNotif("denied"); }
   }
 
-  const readAt = (uid) => Number(localStorage.getItem("read_" + chatIdOf(user.uid, uid)) || 0);
-  const isUnread = (f) => f.lastFrom && f.lastFrom !== user.uid && f.lastAt > readAt(f.uid);
+  const isUnread = (f) => f.unread > 0;
 
   // Gönderdiğim, bekleyen istekler
   useEffect(() => {
@@ -153,10 +191,21 @@ export default function Main({ user, onLogout }) {
             lastAt: d.data().lastAt?.toMillis?.() || 0,
             lastFrom: d.data().lastFrom || "",
             lastKind: d.data().lastKind || "",
+            unread: d.data()["unread_" + user.uid] || 0,
           };
         })
       );
       list.sort((a, b) => b.lastAt - a.lastAt);
+      // Yeni mesaj sesi: başka sohbetteyken veya sekme arka plandayken
+      const prev = prevChats.current;
+      if (prev) {
+        list.forEach((f) => {
+          const was = prev[f.uid] || 0;
+          const here = activeRef.current?.uid === f.uid && document.visibilityState === "visible";
+          if (f.lastAt > was && f.lastFrom && f.lastFrom !== user.uid && !here) beep();
+        });
+      }
+      prevChats.current = Object.fromEntries(list.map((f) => [f.uid, f.lastAt]));
       friendsRef.current = list;
       setFriends(list);
     });
@@ -249,12 +298,15 @@ export default function Main({ user, onLogout }) {
               className={"item" + (active?.uid === f.uid ? " active" : "")}
               onClick={() => setActive(f)}
             >
-              <Avatar name={f.name || t("friend")} photo={f.photo} />
+              <span className="av-wrap">
+                <Avatar name={f.name || t("friend")} photo={f.photo} />
+                {isOnline(f) && <span className="on-dot" aria-hidden="true" />}
+              </span>
               <div className="meta">
                 <div className="name" style={isUnread(f) ? { fontWeight: 600 } : undefined}>{f.name || t("friend")}</div>
                 <div className="sub">{preview(f)}</div>
               </div>
-              {isUnread(f) && <span className="dot" aria-label={t("unread")} />}
+              {isUnread(f) && <span className="badge" aria-label={t("unread")}>{f.unread > 99 ? "99+" : f.unread}</span>}
             </button>
           ))}
 
@@ -290,9 +342,11 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /></div>
+          <div className="side-foot"><div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div><ThemeSwitch /></div>
         </div>
       </aside>
+
+      {diagOpen && <Diag uid={user.uid} onClose={() => setDiagOpen(false)} />}
 
       {blocked && (
         <button
@@ -339,6 +393,8 @@ function Chat({ me, friend, onBack, onRead }) {
   const [diag, setDiag] = useState("");
   const [presence, setPresence] = useState(null);
   const [now, setNow] = useState(Date.now());
+  const [peerRead, setPeerRead] = useState(0);
+  const marked = useRef("");
   const endRef = useRef(null);
   const recorder = useRef(null);
   const chunks = useRef([]);
@@ -385,10 +441,28 @@ function Chat({ me, friend, onBack, onRead }) {
     });
   }, [chatId, me.uid]);
 
+  // Karşı tarafın okuma zamanı (okundu işareti için)
+  useEffect(
+    () => onSnapshot(doc(db, "chats", chatId), (d) => setPeerRead(d.data()?.["read_" + friend.uid]?.toMillis?.() || 0)),
+    [chatId, friend.uid]
+  );
+
+  // Açık sohbette gelen mesajları okundu say: sayaç sıfırlanır, karşı taraf okundu işaretini görür
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-    localStorage.setItem("read_" + chatId, String(Date.now()));
     onRead?.();
+    const mark = () => {
+      if (document.visibilityState !== "visible") return;
+      const last = [...msgs].reverse().find((m) => m.from !== me.uid);
+      if (!last || marked.current === last.id) return;
+      marked.current = last.id;
+      updateDoc(doc(db, "chats", chatId), {
+        ["read_" + me.uid]: serverTimestamp(), ["unread_" + me.uid]: 0,
+      }).catch(() => {});
+    };
+    mark();
+    document.addEventListener("visibilitychange", mark);
+    return () => document.removeEventListener("visibilitychange", mark);
   }, [msgs]);
 
   // Kilitli yayın: ekran uyumasın, arka plandan dönünce kilidi yenile, bildirimden durdurulabilsin
@@ -439,7 +513,9 @@ function Chat({ me, friend, onBack, onRead }) {
   }, [rec]);
 
   async function afterSend(kind, quiet) {
-    await updateDoc(doc(db, "chats", chatId), { lastAt: serverTimestamp(), lastFrom: me.uid, lastKind: kind });
+    await updateDoc(doc(db, "chats", chatId), {
+      lastAt: serverTimestamp(), lastFrom: me.uid, lastKind: kind, ["unread_" + friend.uid]: increment(1),
+    });
     if (!quiet) notifyUser(friend.uid, me.displayName || "Telsiz", kind === "voice" ? t("voiceMsg") : t("newMessage"));
   }
 
@@ -595,7 +671,13 @@ function Chat({ me, friend, onBack, onRead }) {
             onClickCapture={(e) => { if (longFired.current) { e.preventDefault(); e.stopPropagation(); longFired.current = false; } }}
           >
             {m.type === "voice" ? <VoiceMsg src={m.audio} id={m.id} /> : m.text}
-            <span className="time">{clock(m)}</span>
+            <span className="time">
+              {clock(m)}
+              {m.from === me.uid && (() => {
+                const read = m.createdAt?.toMillis && peerRead >= m.createdAt.toMillis();
+                return <span className={"tick" + (read ? " read" : "")} aria-hidden="true"> {read ? "✓✓" : "✓"}</span>;
+              })()}
+            </span>
           </div>
         ))}
         <div ref={endRef} />

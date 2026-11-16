@@ -268,3 +268,18 @@ body { transition: background .2s ease, color .2s ease; }
 
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand h1 { font-size: 30px; }
+
+.btn-sm.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+.diag-box { width: 100%; max-width: 420px; max-height: 80dvh; overflow-y: auto; background: var(--surface); color: var(--text); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); align-self: center; }
+.diag-box h2 { font-size: 18px; margin-bottom: 12px; }
+.diag-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.diag-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
+.diag-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.diag-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.diag-actions .sheet-cancel { padding: 7px 14px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14px; }
+
+.av-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.on-dot { position: absolute; right: -2px; bottom: -2px; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; border: 2px solid var(--surface); }
+.badge { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); flex-shrink: 0; }
+.tick { letter-spacing: -2px; opacity: .8; }
+.tick.read { color: #22c55e; opacity: 1; font-weight: 700; }
