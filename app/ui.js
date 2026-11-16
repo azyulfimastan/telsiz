@@ -312,9 +312,14 @@ export function Splash() {
   }, []);
 
   useEffect(() => {
-    if (phase !== "out") return;
-    const b = setTimeout(() => setPhase("off"), 700);
-    return () => clearTimeout(b);
+    if (phase === "credit") {
+      const a = setTimeout(() => setPhase("out"), 2900);
+      return () => clearTimeout(a);
+    }
+    if (phase === "out") {
+      const b = setTimeout(() => setPhase("off"), 700);
+      return () => clearTimeout(b);
+    }
   }, [phase]);
 
   const choose = (e, code) => {
@@ -322,7 +327,7 @@ export function Splash() {
     radioClick();
     setLang(code);
     try { localStorage.setItem("langChosen", "1"); } catch {}
-    setPhase("out");
+    setPhase("credit");
   };
 
   if (phase === "off") return null;
@@ -335,12 +340,12 @@ export function Splash() {
             <Orb size={84} />
             <h1 className="display splash-title"><Typed text="TELSIZ" start={300} step={90} /></h1>
             <div className="splash-rule" />
-            <p className="splash-credit"><TypedCredit start={900} /></p>
-            <div className="eq" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
+            {phase !== "show" && <p className="splash-credit"><TypedCredit start={150} /></p>}
+            {phase !== "show" && <div className="eq" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>}
           </>
         )}
       </div>
-      <div className="splash-langs">
+      <div className={"splash-langs" + (phase === "show" ? "" : " gone")}>
         <span className="pick-hint">Dil · Język · Language</span>
         <div className="lang-row">
           {LANGS.map((l) => (

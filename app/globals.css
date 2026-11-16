@@ -414,3 +414,4 @@ html { background: var(--grad-b, #6a63f5); }
 .ver-tag { position: fixed; top: calc(6px + env(safe-area-inset-top)); right: 10px; z-index: 250; font-size: 13px; font-weight: 700; line-height: 1; letter-spacing: .03em; color: #fff; background: rgba(0, 0, 0, .45); padding: 5px 9px; border-radius: 999px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); pointer-events: none; }
 .ver-tag { top: calc(21px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); }
 .side-head, .chat-head { padding-right: calc(72px + env(safe-area-inset-right)); }
+.splash-langs.gone { opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .3s ease, transform .3s ease; animation: none; }
