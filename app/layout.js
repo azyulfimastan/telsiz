@@ -5,6 +5,7 @@ import "@fontsource/ibm-plex-sans/latin-ext-400.css";
 import "@fontsource/ibm-plex-sans/latin-ext-500.css";
 import "@fontsource/ibm-plex-sans/latin-ext-600.css";
 import "./globals.css";
+import { LangProvider } from "@/lib/i18n";
 
 export const metadata = {
   title: "Telsiz",
@@ -19,7 +20,7 @@ export const viewport = { themeColor: "#0e1218" };
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body><LangProvider>{children}</LangProvider></body>
     </html>
   );
 }

@@ -6,11 +6,17 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
-import { Avatar, Icon, VoiceMsg } from "./ui";
+import { listenLive, liveSupported, startLive } from "@/lib/live";
+import { useI18n } from "@/lib/i18n";
+import { Avatar, Icon, LangSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
 export default function Main({ user, onLogout }) {
+  const { t } = useI18n();
+  const liveAudio = useRef(null);
+  const friendsRef = useRef([]);
+  const [speaker, setSpeaker] = useState(null);
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -23,13 +29,46 @@ export default function Main({ user, onLogout }) {
 
   // İlk dokunuşta sesi aç: sonra gelen sesli mesaj otomatik çalabilsin
   useEffect(() => {
+    const el = (liveAudio.current = new Audio());
+    el.autoplay = true;
+    el.playsInline = true;
     const unlock = () => {
-      new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=").play().catch(() => {});
+      el.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
+      el.play().catch(() => {}).finally(() => { el.removeAttribute("src"); el.load(); });
       window.removeEventListener("pointerdown", unlock);
     };
     window.addEventListener("pointerdown", unlock);
     return () => window.removeEventListener("pointerdown", unlock);
   }, []);
+
+  // Canlı telsiz: gelen yayını dinle
+  useEffect(() => {
+    if (!liveSupported() || !liveAudio.current) return;
+    return listenLive(user.uid, liveAudio.current, (from) => {
+      if (!from) return setSpeaker(null);
+      const f = friendsRef.current.find((x) => x.uid === from);
+      setSpeaker(f?.name || t("friend"));
+    });
+  }, [user.uid]);
+
+  // Çevrimiçi / odada durumu: düzenli kalp atışı
+  useEffect(() => {
+    const room = active ? chatIdOf(user.uid, active.uid) : "";
+    const ref = doc(db, "users", user.uid);
+    const beat = (r) =>
+      setDoc(ref, { lastSeen: serverTimestamp(), room: r }, { merge: true }).catch(() => {});
+    const tick = () => beat(document.visibilityState === "visible" ? room : "");
+    tick();
+    const iv = setInterval(tick, 20000);
+    const leave = () => beat("");
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("pagehide", leave);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener("visibilitychange", tick);
+      window.removeEventListener("pagehide", leave);
+    };
+  }, [active, user.uid]);
 
   useEffect(() => {
     if (!pushSupported()) return setNotif("unsupported");
@@ -52,7 +91,7 @@ export default function Main({ user, onLogout }) {
         await Promise.all(
           snap.docs.map(async (d) => {
             const u = await getDoc(doc(db, "users", d.data().to));
-            return { id: d.id, name: u.data()?.name || u.data()?.email || "Biri", photo: u.data()?.photo };
+            return { id: d.id, name: u.data()?.name || u.data()?.email || "", photo: u.data()?.photo };
           })
         )
       );
@@ -67,7 +106,7 @@ export default function Main({ user, onLogout }) {
         await Promise.all(
           snap.docs.map(async (d) => {
             const u = await getDoc(doc(db, "users", d.data().from));
-            return { id: d.id, from: d.data().from, name: u.data()?.name || "Biri", photo: u.data()?.photo };
+            return { id: d.id, from: d.data().from, name: u.data()?.name || "", photo: u.data()?.photo };
           })
         )
       );
@@ -84,7 +123,7 @@ export default function Main({ user, onLogout }) {
           const u = await getDoc(doc(db, "users", other));
           return {
             uid: other,
-            name: u.data()?.name || "Arkadaş",
+            name: u.data()?.name || "",
             email: u.data()?.email || "",
             photo: u.data()?.photo || "",
             lastAt: d.data().lastAt?.toMillis?.() || 0,
@@ -94,6 +133,7 @@ export default function Main({ user, onLogout }) {
         })
       );
       list.sort((a, b) => b.lastAt - a.lastAt);
+      friendsRef.current = list;
       setFriends(list);
     });
   }, [user.uid]);
@@ -103,20 +143,20 @@ export default function Main({ user, onLogout }) {
     setInfo("");
     const addr = email.trim().toLowerCase();
     if (!addr) return;
-    if (addr === (user.email || "").toLowerCase()) return setInfo("Bu senin adresin.");
+    if (addr === (user.email || "").toLowerCase()) return setInfo(t("ownAddress"));
     try {
       const snap = await getDocs(query(collection(db, "users"), where("email", "==", addr), limit(1)));
-      if (snap.empty) return setInfo("Bu adresle kayıtlı kullanıcı yok. Önce uygulamaya Google ile girmesi gerekir.");
+      if (snap.empty) return setInfo(t("noUser"));
       const target = snap.docs[0].id;
-      if (friends.some((f) => f.uid === target)) return setInfo("Zaten arkadaşsınız.");
-      if (incoming.some((r) => r.from === target)) return setInfo("Bu kişi sana zaten istek göndermiş. Soldan kabul edebilirsin.");
+      if (friends.some((f) => f.uid === target)) return setInfo(t("alreadyFriends"));
+      if (incoming.some((r) => r.from === target)) return setInfo(t("alreadyRequested"));
       await setDoc(doc(db, "requests", `${user.uid}_${target}`), {
         from: user.uid, to: target, status: "pending", createdAt: serverTimestamp(),
       });
       setEmail("");
-      setInfo("İstek gönderildi.");
+      setInfo(t("requestSent"));
     } catch (err) {
-      setInfo("İstek gönderilemedi: " + (err.code || err.message));
+      setInfo(t("requestFail", { e: err.code || err.message }));
     }
   }
 
@@ -127,12 +167,12 @@ export default function Main({ user, onLogout }) {
       });
       await updateDoc(doc(db, "requests", r.id), { status: "accepted" });
     } catch (err) {
-      setInfo("Kabul edilemedi: " + (err.code || err.message));
+      setInfo(t("acceptFail", { e: err.code || err.message }));
     }
   }
 
   const preview = (f) =>
-    !f.lastAt ? f.email : (f.lastFrom === user.uid ? "Sen: " : "") + (f.lastKind === "voice" ? "Sesli mesaj" : "Mesaj");
+    !f.lastAt ? f.email : (f.lastFrom === user.uid ? t("you") : "") + (f.lastKind === "voice" ? t("voiceMsg") : t("message"));
 
   return (
     <div className={"app" + (active ? " inchat" : "")}>
@@ -141,40 +181,40 @@ export default function Main({ user, onLogout }) {
           <Avatar name={user.displayName || user.email} photo={user.photoURL} size={36} />
           <span className="who">{user.displayName || user.email}</span>
           {notif === "default" && (
-            <button className="icon-btn accent" onClick={turnOnNotif} aria-label="Bildirimleri aç" title="Bildirimleri aç">
+            <button className="icon-btn accent" onClick={turnOnNotif} aria-label={t("notifOn")} title={t("notifOn")}>
               <Icon name="bell" />
             </button>
           )}
           {notif === "denied" && (
-            <span className="icon-btn" title="Bildirimler tarayıcıda engelli" aria-label="Bildirimler engelli">
+            <span className="icon-btn" title={t("notifBlocked")} aria-label={t("notifBlocked")}>
               <Icon name="bellOff" />
             </span>
           )}
-          <button className="icon-btn" onClick={onLogout} aria-label="Çıkış yap" title="Çıkış yap">
+          <button className="icon-btn" onClick={onLogout} aria-label={t("logout")} title={t("logout")}>
             <Icon name="logout" />
           </button>
         </header>
 
         <div className="list">
           {notif === "unsupported" && (
-            <p className="empty">iPhone'da bildirim için siteyi Paylaş menüsünden "Ana Ekrana Ekle" ile kur.</p>
+            <p className="empty">{t("iosHint")}</p>
           )}
 
-          {incoming.length > 0 && <div className="section-label">İstekler</div>}
+          {incoming.length > 0 && <div className="section-label">{t("requests")}</div>}
           {incoming.map((r) => (
             <div className="item" key={r.id}>
-              <Avatar name={r.name} photo={r.photo} />
+              <Avatar name={r.name || t("someone")} photo={r.photo} />
               <div className="meta">
-                <div className="name">{r.name}</div>
-                <div className="sub">Arkadaş olmak istiyor</div>
+                <div className="name">{r.name || t("someone")}</div>
+                <div className="sub">{t("wantsFriend")}</div>
               </div>
-              <button className="btn-sm" onClick={() => accept(r)}>Kabul et</button>
+              <button className="btn-sm" onClick={() => accept(r)}>{t("accept")}</button>
             </div>
           ))}
 
-          <div className="section-label">Sohbetler</div>
+          <div className="section-label">{t("chats")}</div>
           {friends.length === 0 && (
-            <p className="empty">Henüz arkadaşın yok. Aşağıdan Gmail adresiyle ekle.</p>
+            <p className="empty">{t("noFriends")}</p>
           )}
           {friends.map((f) => (
             <button
@@ -182,22 +222,22 @@ export default function Main({ user, onLogout }) {
               className={"item" + (active?.uid === f.uid ? " active" : "")}
               onClick={() => setActive(f)}
             >
-              <Avatar name={f.name} photo={f.photo} />
+              <Avatar name={f.name || t("friend")} photo={f.photo} />
               <div className="meta">
-                <div className="name" style={isUnread(f) ? { fontWeight: 600 } : undefined}>{f.name}</div>
+                <div className="name" style={isUnread(f) ? { fontWeight: 600 } : undefined}>{f.name || t("friend")}</div>
                 <div className="sub">{preview(f)}</div>
               </div>
-              {isUnread(f) && <span className="dot" aria-label="Okunmamış mesaj" />}
+              {isUnread(f) && <span className="dot" aria-label={t("unread")} />}
             </button>
           ))}
 
-          {outgoing.length > 0 && <div className="section-label">Bekleyen istekler</div>}
+          {outgoing.length > 0 && <div className="section-label">{t("pending")}</div>}
           {outgoing.map((r) => (
             <div className="item" key={r.id}>
-              <Avatar name={r.name} photo={r.photo} />
+              <Avatar name={r.name || t("someone")} photo={r.photo} />
               <div className="meta">
-                <div className="name">{r.name}</div>
-                <div className="sub">Kabul etmesi bekleniyor</div>
+                <div className="name">{r.name || t("someone")}</div>
+                <div className="sub">{t("waitingAccept")}</div>
               </div>
               <span className="muted"><Icon name="clock" size={18} /></span>
             </div>
@@ -207,24 +247,31 @@ export default function Main({ user, onLogout }) {
         <div className="add">
           {!addOpen ? (
             <button className="add-toggle" onClick={() => setAddOpen(true)}>
-              <Icon name="userPlus" /> Arkadaş ekle
+              <Icon name="userPlus" /> {t("addFriend")}
             </button>
           ) : (
             <form className="add-form" onSubmit={sendRequest}>
               <input
                 className="field"
                 type="email"
-                placeholder="Gmail adresi"
+                placeholder={t("gmail")}
                 value={email}
                 autoFocus
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <button className="btn-sm" type="submit">Ekle</button>
+              <button className="btn-sm" type="submit">{t("add")}</button>
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
+          <div className="add-row" style={{ paddingTop: 8 }}><LangSwitch /></div>
         </div>
       </aside>
+
+      {speaker && (
+        <div className="live-banner" role="status">
+          <span className="rec-dot" /> {t("speaking", { name: speaker })}
+        </div>
+      )}
 
       <section className="chat">
         {active ? (
@@ -237,7 +284,7 @@ export default function Main({ user, onLogout }) {
           />
         ) : (
           <div className="pick">
-            <p>Bir sohbet seç. Mikrofon düğmesine basılı tutarak sesli mesaj gönderebilirsin.</p>
+            <p>{t("pickChat")}</p>
           </div>
         )}
       </section>
@@ -246,29 +293,48 @@ export default function Main({ user, onLogout }) {
 }
 
 function Chat({ me, friend, onBack, onRead }) {
+  const { t, locale } = useI18n();
   const chatId = chatIdOf(me.uid, friend.uid);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
   const [rec, setRec] = useState(false);
   const [sec, setSec] = useState(0);
   const [err, setErr] = useState("");
+  const [liveState, setLiveState] = useState("");
+  const [presence, setPresence] = useState(null);
+  const [now, setNow] = useState(Date.now());
   const endRef = useRef(null);
   const recorder = useRef(null);
   const chunks = useRef([]);
   const startedAt = useRef(0);
   const limitTimer = useRef(null);
   const first = useRef(true);
+  const pressed = useRef(false);
+  const liveRef = useRef(null);
+  const statusRef = useRef("offline");
+
+  // Arkadaşın çevrimiçi / odada durumu
+  useEffect(() => {
+    const un = onSnapshot(doc(db, "users", friend.uid), (d) => setPresence(d.data() || null));
+    const iv = setInterval(() => setNow(Date.now()), 15000);
+    return () => { un(); clearInterval(iv); };
+  }, [friend.uid]);
+
+  const seen = presence?.lastSeen?.toMillis?.() || 0;
+  const status = !seen || now - seen > 70000 ? "offline" : presence?.room === chatId ? "room" : "online";
+  statusRef.current = status;
+  const statusLabel = { room: t("stInRoom"), online: t("stOnline"), offline: t("stOffline") }[status];
 
   useEffect(() => {
     first.current = true;
     const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(200));
     return onSnapshot(q, (snap) => {
       setMsgs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      // Telsiz: sonradan gelen sesli mesajı otomatik çal
+      // Canlı yayınla zaten dinlenmeyen sesli mesajı otomatik çal
       if (!first.current) {
         snap.docChanges().forEach((c) => {
           const m = c.doc.data();
-          if (c.type === "added" && m.from !== me.uid && m.type === "voice" && m.audio) {
+          if (c.type === "added" && m.from !== me.uid && m.type === "voice" && m.audio && !m.live) {
             new Audio(m.audio).play().catch(() => {});
           }
         });
@@ -286,27 +352,27 @@ function Chat({ me, friend, onBack, onRead }) {
   useEffect(() => {
     if (!rec) return;
     setSec(0);
-    const t = setInterval(() => setSec(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
-    return () => clearInterval(t);
+    const i = setInterval(() => setSec(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
+    return () => clearInterval(i);
   }, [rec]);
 
-  async function afterSend(kind) {
+  async function afterSend(kind, quiet) {
     await updateDoc(doc(db, "chats", chatId), { lastAt: serverTimestamp(), lastFrom: me.uid, lastKind: kind });
-    notifyUser(friend.uid, me.displayName || "Telsiz", kind === "voice" ? "Sesli mesaj" : "Yeni mesaj");
+    if (!quiet) notifyUser(friend.uid, me.displayName || "Telsiz", kind === "voice" ? t("voiceMsg") : t("newMessage"));
   }
 
   async function sendText(e) {
     e?.preventDefault();
-    const t = text.trim();
-    if (!t) return;
+    const v = text.trim();
+    if (!v) return;
     setText("");
     try {
       await addDoc(collection(db, "chats", chatId, "messages"), {
-        from: me.uid, type: "text", text: t, createdAt: serverTimestamp(),
+        from: me.uid, type: "text", text: v, createdAt: serverTimestamp(),
       });
       afterSend("text");
     } catch (er) {
-      setErr("Mesaj gönderilemedi: " + (er.code || er.message));
+      setErr(t("sendFail", { e: er.code || er.message }));
     }
   }
 
@@ -314,16 +380,27 @@ function Chat({ me, friend, onBack, onRead }) {
     e.preventDefault();
     e.currentTarget.setPointerCapture?.(e.pointerId);
     setErr("");
+    pressed.current = true;
+    setLiveState("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!pressed.current) { // izin penceresi sırasında bırakıldı
+        stream.getTracks().forEach((tr) => tr.stop());
+        return;
+      }
       const mr = new MediaRecorder(stream, { audioBitsPerSecond: 24000 });
       chunks.current = [];
       mr.ondataavailable = (ev) => ev.data.size && chunks.current.push(ev.data);
       mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((tr) => tr.stop());
+        const lv = liveRef.current;
+        liveRef.current = null;
+        const wasLive = !!lv?.answered;
+        lv?.stop();
+        setLiveState("");
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
         const blob = new Blob(chunks.current, { type: mr.mimeType });
-        if (blob.size > 700_000) return setErr("Kayıt çok uzun. En fazla 60 saniye kaydedebilirsin.");
+        if (blob.size > 700_000) return setErr(t("tooLong"));
         const audio = await new Promise((res) => {
           const fr = new FileReader();
           fr.onload = () => res(fr.result);
@@ -331,11 +408,11 @@ function Chat({ me, friend, onBack, onRead }) {
         });
         try {
           await addDoc(collection(db, "chats", chatId, "messages"), {
-            from: me.uid, type: "voice", audio, createdAt: serverTimestamp(),
+            from: me.uid, type: "voice", audio, live: wasLive, createdAt: serverTimestamp(),
           });
-          afterSend("voice");
+          afterSend("voice", wasLive);
         } catch (er) {
-          setErr("Sesli mesaj gönderilemedi: " + (er.code || er.message));
+          setErr(t("voiceFail", { e: er.code || er.message }));
         }
       };
       recorder.current = mr;
@@ -343,34 +420,48 @@ function Chat({ me, friend, onBack, onRead }) {
       mr.start();
       setRec(true);
       limitTimer.current = setTimeout(stopRec, 60000);
+      // Arkadaş çevrimiçiyse sesi canlı yolla
+      if (liveSupported() && statusRef.current !== "offline") {
+        startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
+          .then((lv) => {
+            if (recorder.current !== mr || mr.state !== "recording") lv.stop();
+            else liveRef.current = lv;
+          })
+          .catch(() => setLiveState(""));
+      }
     } catch {
-      setErr("Mikrofon izni gerekli. Tarayıcı adres çubuğundan mikrofona izin ver.");
+      setErr(t("micNeeded"));
     }
   }
 
   function stopRec() {
+    pressed.current = false;
     clearTimeout(limitTimer.current);
     if (recorder.current && recorder.current.state === "recording") recorder.current.stop();
     setRec(false);
   }
 
-  const clock = (m) => m.createdAt?.toDate?.().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  const clock = (m) => m.createdAt?.toDate?.().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  const recLabel = liveState === "live" ? t("live") : liveState === "connecting" ? t("connecting") : t("releaseSend");
 
   return (
     <>
       <header className="chat-head">
-        <button className="icon-btn back" onClick={onBack} aria-label="Sohbet listesine dön">
+        <button className="icon-btn back" onClick={onBack} aria-label={t("backToList")}>
           <Icon name="back" />
         </button>
-        <Avatar name={friend.name} photo={friend.photo} size={36} />
-        <span className="title">{friend.name}</span>
+        <Avatar name={friend.name || t("friend")} photo={friend.photo} size={36} />
+        <div className="head-text">
+          <span className="title">{friend.name || t("friend")}</span>
+          <span className={"status " + status}><span className="sd" />{statusLabel}</span>
+        </div>
       </header>
 
       <div className="msgs">
         {msgs.length === 0 && (
           <div className="chat-empty">
             <Icon name="mic" size={28} />
-            <p>Henüz mesaj yok. Yaz ya da mikrofon düğmesine basılı tutup konuş.</p>
+            <p>{t("emptyChat")}</p>
           </div>
         )}
         {msgs.map((m) => (
@@ -393,18 +484,18 @@ function Chat({ me, friend, onBack, onRead }) {
             <div className="rec-bar" role="status">
               <span className="rec-dot" />
               <span className="rec-time">{Math.floor(sec / 60)}:{String(sec % 60).padStart(2, "0")}</span>
-              <span className="muted">Bırakınca gönderilir</span>
+              <span className="muted">{recLabel}</span>
             </div>
           ) : (
             <>
               <input
                 className="field"
-                placeholder="Mesaj yaz"
+                placeholder={t("writeMsg")}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                aria-label="Mesaj"
+                aria-label={t("message")}
               />
-              <button className="send" type="submit" aria-label="Gönder" disabled={!text.trim()} style={!text.trim() ? { opacity: 0.45 } : undefined}>
+              <button className="send" type="submit" aria-label={t("sendBtn")} disabled={!text.trim()} style={!text.trim() ? { opacity: 0.45 } : undefined}>
                 <Icon name="send" />
               </button>
             </>
@@ -416,13 +507,13 @@ function Chat({ me, friend, onBack, onRead }) {
             onPointerUp={stopRec}
             onPointerCancel={stopRec}
             onContextMenu={(e) => e.preventDefault()}
-            aria-label="Basılı tutarak konuş"
-            title="Basılı tutarak konuş"
+            aria-label={t("holdToTalk")}
+            title={t("holdToTalk")}
           >
             <Icon name="mic" size={24} />
           </button>
         </form>
-        {!rec && <p className="hint">Mikrofon düğmesine basılı tut, bırakınca gönderilir.</p>}
+        {!rec && <p className="hint">{t("hint")}</p>}
       </div>
     </>
   );

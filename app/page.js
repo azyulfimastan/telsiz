@@ -6,7 +6,8 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import Main from "./Main";
-import { Icon, Logo } from "./ui";
+import { Icon, LangSwitch, Logo } from "./ui";
+import { useI18n } from "@/lib/i18n";
 
 function GoogleG() {
   return (
@@ -22,6 +23,7 @@ function GoogleG() {
 export default function Page() {
   const [user, setUser] = useState(undefined);
   const [err, setErr] = useState("");
+  const { t } = useI18n();
 
   async function login() {
     setErr("");
@@ -52,14 +54,14 @@ export default function Page() {
             { merge: true }
           );
         } catch (e) {
-          setErr("Firestore: " + e.code + ". Firestore kuralları yayınlanmış mı?");
+          setErr(t("firestoreErr", { code: e.code }));
         }
       }
       setUser(u);
     });
   }, []);
 
-  if (user === undefined) return <div className="loading">Yükleniyor…</div>;
+  if (user === undefined) return <div className="loading">{t("loading")}</div>;
 
   if (!user)
     return (
@@ -68,16 +70,17 @@ export default function Page() {
           <Logo size={44} />
           <div>
             <h1>Telsiz</h1>
-            <p>Arkadaşlarınla yaz, basılı tutup konuş.</p>
+            <p>{t("tagline")}</p>
           </div>
           <button className="btn-google" onClick={login}>
-            <GoogleG /> Google ile giriş yap
+            <GoogleG /> {t("googleLogin")}
           </button>
           {err && (
             <p className="err" role="alert">
               <Icon name="alert" size={16} /> <span>{err}</span>
             </p>
           )}
+          <LangSwitch />
         </div>
       </main>
     );

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LANGS, useI18n } from "@/lib/i18n";
 
 const P = {
   mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
@@ -71,6 +72,7 @@ const fmt = (s) => {
 
 // Ses mesajı oynatıcı: oynat/duraklat, dalga biçimi, süre
 export function VoiceMsg({ src, id = "x" }) {
+  const { t: tr } = useI18n();
   const ref = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
@@ -112,7 +114,7 @@ export function VoiceMsg({ src, id = "x" }) {
         onEnded={() => { setPlaying(false); setT(0); }}
         onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
       />
-      <button type="button" className="voice-btn" onClick={toggle} aria-label={playing ? "Duraklat" : "Oynat"}>
+      <button type="button" className="voice-btn" onClick={toggle} aria-label={playing ? tr("pause") : tr("play")}>
         <Icon name={playing ? "pause" : "play"} size={16} />
       </button>
       <div className="wave" aria-hidden="true">
@@ -121,6 +123,26 @@ export function VoiceMsg({ src, id = "x" }) {
         ))}
       </div>
       <span className="voice-time">{fmt(playing || t ? t : dur)}</span>
+    </div>
+  );
+}
+
+export function LangSwitch() {
+  const { lang, setLang, t } = useI18n();
+  return (
+    <div className="lang" role="group" aria-label={t("language")}>
+      {LANGS.map((l) => (
+        <button
+          key={l.code}
+          type="button"
+          className={"lang-btn" + (lang === l.code ? " on" : "")}
+          onClick={() => setLang(l.code)}
+          title={l.name}
+          aria-pressed={lang === l.code}
+        >
+          {l.label}
+        </button>
+      ))}
     </div>
   );
 }

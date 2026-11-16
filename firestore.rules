@@ -33,5 +33,12 @@ service cloud.firestore {
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
       }
     }
+    match /live/{id} {
+      allow read: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.from == request.auth.uid
+        && (exists(/databases/$(database)/documents/chats/$(request.auth.uid + '_' + request.resource.data.to))
+         || exists(/databases/$(database)/documents/chats/$(request.resource.data.to + '_' + request.auth.uid)));
+      allow update, delete: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+    }
   }
 }
