@@ -11,6 +11,7 @@ import "@fontsource/ibm-plex-sans/latin-ext-600.css";
 import "./globals.css";
 import { LangProvider } from "@/lib/i18n";
 import Updater from "./Updater";
+import VersionTag from "./VersionTag";
 
 export const metadata = {
   title: "Telsiz",
@@ -26,7 +27,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="tr" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"pink";document.documentElement.dataset.mode=localStorage.getItem("mode")||"light"}catch(e){}` }} /></head>
-      <body><LangProvider>{children}<Updater /></LangProvider></body>
+      <body><LangProvider>{children}<Updater /><VersionTag /></LangProvider></body>
     </html>
   );
 }
