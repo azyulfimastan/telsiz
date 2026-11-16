@@ -208,7 +208,7 @@ function Typed({ text, start, step = 60, className = "" }) {
             const d = start + step * i++;
             return <span key={i} className="tl" style={{ animationDelay: d + "ms" }}>{ch}</span>;
           })}
-          {wi < words.length - 1 && (i++, " ")}
+          {wi < words.length - 1 && (i++, "\u00a0")}
         </span>
       ))}
     </span>
@@ -218,7 +218,7 @@ function Typed({ text, start, step = 60, className = "" }) {
 function TypedCredit({ start }) {
   const { t } = useI18n();
   const pre = t("creditPre"), name = t("creditName"), post = t("creditPost");
-  const step = 55;
+  const step = 40;
   let at = start;
   const part = (txt, cls) => {
     if (!txt) return null;
@@ -260,59 +260,90 @@ function Orb({ size = 92 }) {
   );
 }
 
+export function IntroSwitch() {
+  const { t } = useI18n();
+  const [cur, setCur] = useState("classic");
+  useEffect(() => { try { setCur(localStorage.getItem("intro") || "classic"); } catch {} }, []);
+  const opts = [["classic", "introClassic"], ["scroll", "introScroll"], ["minimal", "introMinimal"]];
+  return (
+    <div className="lang intro-sw" role="group" aria-label={t("intro")}>
+      {opts.map(([id, key]) => (
+        <button key={id} type="button" className={"lang-btn" + (cur === id ? " on" : "")} aria-pressed={cur === id}
+          onClick={() => { setCur(id); try { localStorage.setItem("intro", id); } catch {} }}>
+          {t(key)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Splash() {
   const { t, setLang } = useI18n();
   const [phase, setPhase] = useState("off");
-
-  useEffect(() => { setPhase("pick"); }, []);
+  const [style, setStyle] = useState("classic");
+  const [chosen, setChosen] = useState(false);
 
   useEffect(() => {
-    if (phase !== "on") return;
-    const a = setTimeout(() => setPhase("out"), 8800);
-    const b = setTimeout(() => setPhase("off"), 9600);
-    return () => { clearTimeout(a); clearTimeout(b); };
+    let st = "classic", ch = false;
+    try { st = localStorage.getItem("intro") || "classic"; ch = localStorage.getItem("langChosen") === "1"; } catch {}
+    setStyle(st); setChosen(ch); setPhase("show");
+  }, []);
+
+  // İlk kez açılıyorsa dil seçilene kadar bekler; sonrasında kendiliğinden geçer
+  useEffect(() => {
+    if (phase !== "show" || !chosen) return;
+    const ms = style === "scroll" ? 4800 : 3600;
+    const a = setTimeout(() => setPhase("out"), ms);
+    return () => clearTimeout(a);
+  }, [phase, chosen, style]);
+
+  useEffect(() => {
+    if (phase !== "out") return;
+    const b = setTimeout(() => setPhase("off"), 700);
+    return () => clearTimeout(b);
   }, [phase]);
 
-  const choose = (code) => {
+  const choose = (e, code) => {
+    e.stopPropagation();
     setLang(code);
     try { localStorage.setItem("langChosen", "1"); } catch {}
-    setPhase("on");
+    setChosen(true);
+    setPhase("out");
   };
 
   if (phase === "off") return null;
-  if (phase === "pick") {
-    return (
-      <div className="splash" key="pick">
-        <Backdrop />
-        <div className="splash-in">
-          <Orb size={84} />
-          <h1 className="display splash-title pick-title">TELSIZ</h1>
-          <p className="pick-hint">Dil · Język · Language</p>
-          <div className="lang-pick">
-            {LANGS.map((l, i) => (
-              <button key={l.code} className="lang-pick-btn" style={{ animationDelay: 0.25 + i * 0.12 + "s" }} onClick={() => choose(l.code)}>
-                {l.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
   return (
-    <div key="main" className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
+    <div className={"splash intro-" + style + (phase === "out" ? " out" : "")} onClick={() => chosen && setPhase("out")}>
       <Backdrop />
       <div className="splash-in">
-        <div className="scroll">
-          <i className="rod top" /><i className="rod bot" />
-          <div className="paper">
-            <div className="paper-in">
-              <h1 className="ink-title"><InkLine at={1.7} dur={2.1}>Telsiz</InkLine></h1>
-              <p className="ink-tag">{t("tagline")}</p>
-              <InkCredit at={4.4} />
-              <div className="seal"><Logo size={26} /></div>
+        {style === "scroll" ? (
+          <div className="scroll">
+            <i className="rod top" /><i className="rod bot" />
+            <div className="paper">
+              <div className="paper-in">
+                <h1 className="ink-title"><InkLine at={0.7} dur={0.9}>Telsiz</InkLine></h1>
+                <p className="ink-tag">{t("tagline")}</p>
+                <InkCredit at={1.7} />
+                <div className="seal"><Logo size={26} /></div>
+              </div>
             </div>
           </div>
+        ) : (
+          <>
+            <Orb size={84} />
+            <h1 className="display splash-title"><Typed text="TELSIZ" start={300} step={90} /></h1>
+            <div className="splash-rule" />
+            <p className="splash-credit"><TypedCredit start={900} /></p>
+            <div className="eq" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
+          </>
+        )}
+      </div>
+      <div className="splash-langs">
+        <span className="pick-hint">Dil · Język · Language</span>
+        <div className="lang-row">
+          {LANGS.map((l) => (
+            <button key={l.code} className="lang-pick-btn" onClick={(e) => choose(e, l.code)}>{l.name}</button>
+          ))}
         </div>
       </div>
     </div>
@@ -346,14 +377,14 @@ function InkCredit({ at }) {
   const line = (txt, cls, dur) => {
     if (!txt) return null;
     const el = <div key={cls + txt} className="ink-row"><InkLine at={c} dur={dur} className={cls}>{txt}</InkLine></div>;
-    c += dur + 0.1;
+    c += dur + 0.05;
     return el;
   };
   return (
     <div className="ink-credit" aria-label={t("credit")}>
-      {line(pre, "ink-small", 0.9)}
-      {line(name, "ink-name", 1.3)}
-      {line(post, "ink-small", 1.2)}
+      {line(pre, "ink-small", 0.5)}
+      {line(name, "ink-name", 0.7)}
+      {line(post, "ink-small", 0.6)}
     </div>
   );
 }
