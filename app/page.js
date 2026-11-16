@@ -69,7 +69,7 @@ function Inner() {
         <div className="login-box">
           <div className="brand">
             <Logo size={48} />
-            <h1 className="display">Telsiz</h1>
+            <h1 className="display">TELSIZ</h1>
           </div>
           <p className="login-credit"><Credit /></p>
           <p>{t("tagline")}</p>

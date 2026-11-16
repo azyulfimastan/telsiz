@@ -268,7 +268,7 @@ body { transition: background .2s ease, color .2s ease; }
 .credit-top { padding: 10px 10px 0; flex-shrink: 0; }
 
 .brand { display: flex; align-items: center; gap: 14px; }
-.brand h1 { font-size: 30px; }
+.brand h1 { font-size: 46px; }
 
 .btn-sm.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
 .diag-box { width: 100%; max-width: 420px; max-height: 80dvh; overflow-y: auto; background: var(--surface); color: var(--text); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); align-self: center; }
@@ -301,7 +301,7 @@ body { transition: background .2s ease, color .2s ease; }
 }
 .splash.out { opacity: 0; pointer-events: none; }
 .splash-in { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px; }
-.splash-title { font-size: clamp(44px, 12vw, 72px); line-height: 1.05; text-shadow: 0 4px 24px rgba(0, 0, 0, .22); }
+.splash-title { font-size: clamp(64px, 18vw, 108px); line-height: 1.05; text-shadow: 0 4px 24px rgba(0, 0, 0, .22); }
 .splash-rule { width: 120px; height: 2px; background: rgba(255, 255, 255, .7); border-radius: 2px; }
 .splash-credit { font-size: 15px; color: rgba(255, 255, 255, .95); }
 .splash-credit .roman { font-size: 19px; }

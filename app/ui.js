@@ -276,7 +276,7 @@ export function Splash() {
       <div className="splash" key="intro">
         <div className="splash-in">
           <div className="splash-logo"><Logo size={92} /></div>
-          <h1 className="display splash-title"><Typed text="Telsiz" start={400} step={170} /></h1>
+          <h1 className="display splash-title"><Typed text="TELSIZ" start={400} step={170} /></h1>
           <div className="splash-rule" />
         </div>
       </div>
@@ -287,7 +287,7 @@ export function Splash() {
       <div className="splash">
         <div className="splash-in">
           <div className="splash-logo"><Logo size={84} /></div>
-          <h1 className="display splash-title" style={{ fontSize: "clamp(36px, 10vw, 56px)" }}>Telsiz</h1>
+          <h1 className="display splash-title" style={{ fontSize: "clamp(56px, 16vw, 84px)" }}>Telsiz</h1>
           <div className="splash-rule" style={{ animation: "none", transform: "none" }} />
           <div className="lang-pick">
             {LANGS.map((l) => (
@@ -304,7 +304,7 @@ export function Splash() {
     <div key="main" className={"splash" + (phase === "out" ? " out" : "")} onClick={() => setPhase("off")} aria-hidden="true">
       <div className="splash-in">
         <div className="splash-logo"><Logo size={92} /></div>
-        <h1 className="display splash-title"><Typed text="Telsiz" start={500} step={170} /></h1>
+        <h1 className="display splash-title"><Typed text="TELSIZ" start={500} step={170} /></h1>
         <div className="splash-rule" />
         <p className="splash-credit"><TypedCredit start={1800} /></p>
       </div>
