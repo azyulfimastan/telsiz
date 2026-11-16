@@ -110,6 +110,7 @@ export default function Main({ user, onLogout }) {
   useEffect(() => {
     if (!liveSupported() || !liveAudio.current) return;
     return listenLive(user.uid, liveAudio.current, (from) => {
+      document.body.classList.toggle("listening", !!from);
       if (!from) return setSpeaker(null);
       const f = friendsRef.current.find((x) => x.uid === from);
       setSpeaker(f?.name || t("friend"));
@@ -242,6 +243,7 @@ export default function Main({ user, onLogout }) {
         members: [user.uid, r.from], createdAt: serverTimestamp(),
       });
       await updateDoc(doc(db, "requests", r.id), { status: "accepted" });
+      deleteDoc(doc(db, "requests", `${user.uid}_${r.from}`)).catch(() => {});
     } catch (err) {
       setInfo(t("acceptFail", { e: err.code || err.message }));
     }
@@ -422,6 +424,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const [now, setNow] = useState(Date.now());
   const [peerRead, setPeerRead] = useState(0);
   const marked = useRef("");
+  const scrolled = useRef(false);
   const endRef = useRef(null);
   const recorder = useRef(null);
   const chunks = useRef([]);
@@ -452,9 +455,9 @@ function Chat({ me, friend, onBack, onRead }) {
 
   useEffect(() => {
     first.current = true;
-    const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(200));
+    const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "desc"), limit(150));
     return onSnapshot(q, (snap) => {
-      setMsgs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setMsgs(snap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse());
       setReady(true);
       // Canlı yayınla zaten dinlenmeyen sesli mesajı otomatik çal
       if (!first.current) {
@@ -477,7 +480,8 @@ function Chat({ me, friend, onBack, onRead }) {
 
   // Açık sohbette gelen mesajları okundu say: sayaç sıfırlanır, karşı taraf okundu işaretini görür
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    endRef.current?.scrollIntoView({ behavior: scrolled.current ? "smooth" : "auto", block: "end" });
+    if (msgs.length) scrolled.current = true;
     onRead?.();
     const mark = () => {
       if (document.visibilityState !== "visible") return;
@@ -627,7 +631,7 @@ function Chat({ me, friend, onBack, onRead }) {
       startedAt.current = Date.now();
       mr.start();
       setRec(true);
-      limitTimer.current = setTimeout(stopRec, lock ? 300000 : 60000);
+      limitTimer.current = setTimeout(stopRec, lock ? 220000 : 60000);
       // Arkadaş çevrimiçiyse sesi canlı yolla
       if (liveSupported() && statusRef.current !== "offline") {
         startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })

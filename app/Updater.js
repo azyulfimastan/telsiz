@@ -17,8 +17,10 @@ export default function Updater() {
         const r = await fetch("/api/version?t=" + Date.now(), { cache: "no-store" });
         const { v } = await r.json();
         if (!alive || !v || v === CURRENT) return;
+        const busy = document.body.classList.contains("talking") || document.body.classList.contains("listening");
         const typing = document.activeElement && ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) && document.activeElement.value;
-        if (!document.body.classList.contains("talking") && !typing) location.reload();
+        // Uygulamaya dönüşte sessizce yenile; kullanım sırasında yenileme yapma, çubuk göster
+        if (resume && !busy && !typing) location.reload();
         else setStale(true);
       } catch {}
     };

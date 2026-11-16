@@ -333,9 +333,14 @@ export function Splash() {
   useEffect(() => {
     if (user === undefined) return;
     if (prevUser.current === undefined) {
-      if (user) setPhase("off");
+      if (user) setPhase("out");
       else { setLang("tr"); try { localStorage.removeItem("lang"); } catch {} }
     } else if (prevUser.current === null && user) setPhase("out");
+    else if (prevUser.current && !user) {
+      // Çıkış yapınca açılış ekranı yeniden gelir
+      setLang("tr"); try { localStorage.removeItem("lang"); } catch {}
+      setErr(""); setPhase("show");
+    }
     prevUser.current = user;
   }, [user]);
 
