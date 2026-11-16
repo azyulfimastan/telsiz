@@ -6,7 +6,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import Main from "./Main";
-import { Icon, LangSwitch, Logo } from "./ui";
+import { Icon, LangSwitch, Logo, ThemeSwitch } from "./ui";
 import { useI18n } from "@/lib/i18n";
 
 function GoogleG() {
@@ -81,6 +81,7 @@ export default function Page() {
             </p>
           )}
           <LangSwitch />
+          <ThemeSwitch />
         </div>
       </main>
     );

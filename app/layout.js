@@ -15,11 +15,12 @@ export const metadata = {
   appleWebApp: { capable: true, title: "Telsiz", statusBarStyle: "black-translucent" },
 };
 
-export const viewport = { themeColor: "#0e1218" };
+export const viewport = { themeColor: "#5b6cff" };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="tr">
+    <html lang="tr" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"light"}catch(e){}` }} /></head>
       <body><LangProvider>{children}</LangProvider></body>
     </html>
   );

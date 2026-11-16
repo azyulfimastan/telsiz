@@ -8,7 +8,7 @@ import { db } from "@/lib/firebase";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { listenLive, liveSupported, startLive } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
-import { Avatar, Icon, LangSwitch, VoiceMsg } from "./ui";
+import { Avatar, Icon, LangSwitch, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -29,7 +29,7 @@ export default function Main({ user, onLogout }) {
 
   // İlk dokunuşta sesi aç: sonra gelen sesli mesaj otomatik çalabilsin
   useEffect(() => {
-    const el = (liveAudio.current = new Audio());
+    const el = liveAudio.current;
     el.autoplay = true;
     el.playsInline = true;
     // Arka plandaki sekmede de bağlantı donmasın: çok kısık, sürekli çalan bir ses + medya oturumu
@@ -199,6 +199,7 @@ export default function Main({ user, onLogout }) {
 
   return (
     <div className={"app" + (active ? " inchat" : "")}>
+      <audio ref={liveAudio} playsInline autoPlay style={{ display: "none" }} />
       <aside className="side">
         <header className="side-head">
           <Avatar name={user.displayName || user.email} photo={user.photoURL} size={36} />
@@ -286,7 +287,7 @@ export default function Main({ user, onLogout }) {
             </form>
           )}
           {info && <p className="info" role="status">{info}</p>}
-          <div className="add-row" style={{ paddingTop: 8 }}><LangSwitch /></div>
+          <div className="side-foot"><div className="add-row"><LangSwitch /></div><ThemeSwitch /></div>
         </div>
       </aside>
 

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LANGS, useI18n } from "@/lib/i18n";
+import { LANGS, THEMES, useI18n } from "@/lib/i18n";
 
 const P = {
   mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
@@ -43,9 +43,15 @@ export function Logo({ size = 40 }) {
   const bars = [[16, 24], [24, 14], [32, 6], [40, 14], [48, 24]];
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#161C24" />
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style={{ stopColor: "var(--grad-a)" }} />
+          <stop offset="1" style={{ stopColor: "var(--grad-b)" }} />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="16" fill="url(#lg)" />
       {bars.map(([x, y], i) => (
-        <rect key={i} x={x - 3} y={y} width="6" height={64 - 2 * y} rx="3" fill="#E0A94A" opacity={i === 2 ? 1 : 0.55 + (i % 2 ? 0 : 0.2)} />
+        <rect key={i} x={x - 3} y={y} width="6" height={64 - 2 * y} rx="3" fill="#fff" opacity={i === 2 ? 1 : 0.75} />
       ))}
     </svg>
   );
@@ -57,7 +63,7 @@ export function Avatar({ name = "?", photo, size = 40 }) {
     [name]
   );
   const hue = useMemo(() => [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7), [name]);
-  const style = { width: size, height: size, fontSize: size * 0.38, background: `hsl(${hue} 16% 24%)` };
+  const style = { width: size, height: size, fontSize: size * 0.38, background: `linear-gradient(135deg, hsl(${hue} 70% 58%), hsl(${(hue + 40) % 360} 70% 48%))` };
   return photo ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img className="avatar" style={style} src={photo} alt="" referrerPolicy="no-referrer" />
@@ -144,6 +150,35 @@ export function LangSwitch() {
         >
           {l.label}
         </button>
+      ))}
+    </div>
+  );
+}
+
+export function ThemeSwitch() {
+  const { t } = useI18n();
+  const [cur, setCur] = useState("light");
+  useEffect(() => { setCur(document.documentElement.dataset.theme || "light"); }, []);
+  const pick = (id) => {
+    setCur(id);
+    document.documentElement.dataset.theme = id;
+    try { localStorage.setItem("theme", id); } catch {}
+    const c = getComputedStyle(document.documentElement).getPropertyValue("--grad-a").trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", c);
+  };
+  return (
+    <div className="theme-sw" role="group" aria-label={t("theme")}>
+      {THEMES.map((th) => (
+        <button
+          key={th.id}
+          type="button"
+          className={"theme-dot" + (cur === th.id ? " on" : "")}
+          style={{ background: `linear-gradient(135deg, ${th.a}, ${th.b})` }}
+          onClick={() => pick(th.id)}
+          title={t(th.key)}
+          aria-label={t(th.key)}
+          aria-pressed={cur === th.id}
+        />
       ))}
     </div>
   );
