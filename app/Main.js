@@ -688,7 +688,7 @@ function Chat({ me, friend, onBack, onRead }) {
       limitTimer.current = setTimeout(stopRec, lockedRef.current ? 220000 : 60000);
       // Ses hemen yedek yoldan akmaya başlar (ilk saniye kaybolmaz). Doğrudan bağlantı kurulup
       // karşı taraf sesi duymaya başlarsa yedek yol kapanır.
-      if (statusRef.current !== "offline") {
+      {
         relayRef.current = startRelay({ chatId, from: me.uid, stream });
         clearInterval(relayWatch.current);
         relayWatch.current = setInterval(() => {
@@ -697,7 +697,7 @@ function Chat({ me, friend, onBack, onRead }) {
           if (r && r.delivered > 0) setLiveState("live");
         }, 300);
       }
-      if (liveSupported() && statusRef.current !== "offline") {
+      if (liveSupported()) {
         startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
           .then((lv) => {
             if (recorder.current !== mr || mr.state !== "recording") lv.stop();
@@ -736,7 +736,7 @@ function Chat({ me, friend, onBack, onRead }) {
   }
 
   const clock = (m) => m.createdAt?.toDate?.().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
-  const recLabel = liveState === "live" ? t("live") : liveState === "connecting" ? t("connecting") : t("releaseSend");
+  const recLabel = status === "offline" && liveState !== "live" ? t("offlineRec") : liveState === "live" ? t("live") : liveState === "connecting" ? t("connecting") : t("releaseSend");
 
   return (
     <>
