@@ -666,6 +666,10 @@ function Chat({ me, friend, onBack, onRead }) {
       if (statusRef.current !== "offline") {
         setTimeout(() => {
           if (recorder.current === mr && mr.state === "recording" && !liveRef.current?.connected && !relayRef.current) {
+            // Tekrarı önlemek için doğrudan bağlantıyı kapat: ses yalnızca yedek yoldan gider
+            const l = liveRef.current;
+            liveRef.current = null;
+            l?.stop();
             relayRef.current = startRelay({ chatId, from: me.uid, stream });
           }
         }, 1500);
@@ -673,7 +677,7 @@ function Chat({ me, friend, onBack, onRead }) {
       if (liveSupported() && statusRef.current !== "offline") {
         startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
           .then((lv) => {
-            if (recorder.current !== mr || mr.state !== "recording") lv.stop();
+            if (recorder.current !== mr || mr.state !== "recording" || relayRef.current) lv.stop();
             else liveRef.current = lv;
           })
           .catch(() => setLiveState(""));
