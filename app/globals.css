@@ -552,3 +552,4 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .lock-hint.done { background: var(--danger); color: #fff; border: 1px solid var(--danger); }
 @keyframes lockNudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
 .ptt { transition: transform .08s linear, background .12s ease; }
+.ptt.arming { transform: scale(1.06); filter: brightness(1.1); animation: none; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); }

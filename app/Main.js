@@ -460,6 +460,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const [locked, setLocked] = useState(false);
   const liveRef = useRef(null);
   const [drag, setDrag] = useState(0);
+  const [arming, setArming] = useState(false);
   const relayRef = useRef(null);
   const relayWatch = useRef(null);
   const statusRef = useRef("offline");
@@ -649,8 +650,10 @@ function Chat({ me, friend, onBack, onRead }) {
       );
     }
     setLiveState("");
+    setArming(true); // dokunuş anında görsel tepki: mikrofon hazırlanırken de tuş canlı görünsün
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setArming(false);
       if (!pressed.current) { // izin penceresi sırasında bırakıldı
         stream.getTracks().forEach((tr) => tr.stop());
         return;
@@ -705,8 +708,10 @@ function Chat({ me, friend, onBack, onRead }) {
           })
           .catch(() => setLiveState(""));
       }
-    } catch {
-      setErr(t("micNeeded"));
+    } catch (er) {
+      setArming(false);
+      stopRec();
+      setErr(t("micNeeded") + (er?.name ? " (" + er.name + ")" : ""));
     }
   }
 
@@ -832,7 +837,7 @@ function Chat({ me, friend, onBack, onRead }) {
             <span className="ptt-side" aria-hidden="true" />
             <button
               type="button"
-              className={"ptt" + (rec ? " rec" : "")}
+              className={"ptt" + (rec ? " rec" : "") + (arming && !rec ? " arming" : "")}
               style={drag ? { transform: `translateX(${drag * 38}px)` } : undefined}
               onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, false); }}
               onContextMenu={(e) => e.preventDefault()}
@@ -847,7 +852,7 @@ function Chat({ me, friend, onBack, onRead }) {
               </span>
             </span>
           </div>
-          {!rec && <p className="ptt-cap">{t("holdToTalk")}</p>}
+          {!rec && <p className="ptt-cap">{arming ? t("arming") : t("holdToTalk")}</p>}
           {rec && !locked && <p className="ptt-cap">{t("slideLock")}</p>}
           {rec && locked && <p className="hint">{t("lockedHint")}</p>}
           {!rec && diag && <p className={"hint diag " + (diag === "diagLive" ? "ok" : "warn")}>{t(diag)}</p>}
