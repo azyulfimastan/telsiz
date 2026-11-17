@@ -725,18 +725,10 @@ function Chat({ me, friend, onBack, onRead }) {
         clearInterval(relayWatch.current);
         relayWatch.current = setInterval(() => {
           const r = relayRef.current;
-          if (r && liveRef.current?.heard) { r.stop(); relayRef.current = null; clearInterval(relayWatch.current); }
           if (r && r.delivered > 0) setLiveState("live");
         }, 300);
       }
-      if (liveSupported()) {
-        startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
-          .then((lv) => {
-            if (recorder.current !== mr || mr.state !== "recording") lv.stop();
-            else liveRef.current = lv;
-          })
-          .catch(() => setLiveState(""));
-      }
+      // Doğrudan (WebRTC) yol şimdilik kapalı: ses yalnızca yedek yoldan, konuşma boyunca kesintisiz gider.
     } catch (er) {
       gumBusy.current = false;
       setArming(false);
