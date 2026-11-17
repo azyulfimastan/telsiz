@@ -532,3 +532,16 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .lock-btn { width: 68px; height: 68px; margin-bottom: 14px; box-shadow: 0 6px 16px rgba(0,0,0,.08); }
 .lock-btn:active { transform: scale(.92); }
 .ptt-wrap .hint { max-width: 300px; }
+
+/* v3.9 telsiz paneli: mikrofon ortada, kilit hemen sağında, aynı hizada */
+.composer { padding-bottom: 0; }
+.ptt-wrap { margin: 10px -14px 0; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); gap: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), color-mix(in srgb, var(--accent) 14%, var(--surface)));
+  border-top: 1px solid var(--line); border-radius: 26px 26px 0 0; }
+.ptt-row { max-width: 320px; padding: 0; justify-content: center; align-items: center; display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; }
+.ptt-side { display: flex; align-items: center; justify-content: flex-start; padding-left: 18px; }
+.ptt-side:first-child { justify-content: flex-end; }
+.lock-btn { width: 52px; height: 52px; margin: 0; }
+.ptt { width: 92px; height: 92px; }
+.ptt-cap { font-size: 13px; font-weight: 600; color: var(--muted); text-align: center; margin: 0; }
+.chat-head .status { white-space: nowrap; }

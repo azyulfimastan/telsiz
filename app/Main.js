@@ -490,7 +490,7 @@ function Chat({ me, friend, onBack, onRead }) {
     return t("stLastSeen", { t: day + " " + hm });
   };
   const statusLabel = status === "offline"
-    ? t("stOffline") + (seen ? " · " + lastSeenText() : "")
+    ? (seen ? lastSeenText() : t("stOffline"))
     : { room: t("stInRoom"), online: t("stOnline") }[status];
 
   useEffect(() => {
@@ -809,20 +809,18 @@ function Chat({ me, friend, onBack, onRead }) {
         </form>
         <div className="ptt-wrap">
           <div className="ptt-row">
-            <div className="ptt-slot">
-              <button
-                type="button"
-                className={"ptt" + (rec && !locked ? " rec" : "")}
-                onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, false); }}
-                onContextMenu={(e) => e.preventDefault()}
-                aria-label={t("holdToTalk")}
-                title={t("holdToTalk")}
-              >
-                <Icon name="mic" size={36} />
-              </button>
-              <span className="ptt-cap">{t("holdToTalk")}</span>
-            </div>
-            <div className="ptt-slot">
+            <span className="ptt-side" aria-hidden="true" />
+            <button
+              type="button"
+              className={"ptt" + (rec && !locked ? " rec" : "")}
+              onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, false); }}
+              onContextMenu={(e) => e.preventDefault()}
+              aria-label={t("holdToTalk")}
+              title={t("holdToTalk")}
+            >
+              <Icon name="mic" size={38} />
+            </button>
+            <span className="ptt-side">
               <button
                 type="button"
                 className={"lock-btn" + (locked ? " on" : "")}
@@ -831,11 +829,11 @@ function Chat({ me, friend, onBack, onRead }) {
                 aria-label={locked ? t("stopLock") : t("lockTalk")}
                 title={locked ? t("stopLock") : t("lockTalk")}
               >
-                <Icon name={locked ? "stop" : "lock"} size={26} />
+                <Icon name={locked ? "stop" : "lock"} size={22} />
               </button>
-              <span className="ptt-cap">{locked ? t("stopLock") : t("lockTalk")}</span>
-            </div>
+            </span>
           </div>
+          {!rec && <p className="ptt-cap">{t("holdToTalk")}</p>}
           {rec && locked && <p className="hint">{t("lockedHint")}</p>}
           {!rec && diag && <p className={"hint diag " + (diag === "diagLive" ? "ok" : "warn")}>{t(diag)}</p>}
         </div>
