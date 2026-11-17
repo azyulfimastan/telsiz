@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
-import { listenLive, liveSupported, startLive } from "@/lib/live";
+import { listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
 import { Credit, Avatar, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceMsg } from "./ui";
@@ -116,6 +116,23 @@ export default function Main({ user, onLogout }) {
       setSpeaker(f?.name || t("friend"));
     }, setBlocked);
   }, [user.uid]);
+
+  // Yedek yol: doğrudan bağlantı kurulamazsa gelen ses parçalarını Firestore'dan çal
+  useEffect(() => {
+    if (!liveAudio.current || !friendKey) return;
+    return listenRelay({
+      uid: user.uid,
+      chatIds: friendKey.split(",").map((u) => chatIdOf(user.uid, u)),
+      audio: liveAudio.current,
+      onSpeaking: (from) => {
+        document.body.classList.toggle("listening", !!from);
+        if (!from) return setSpeaker(null);
+        const f = friendsRef.current.find((x) => x.uid === from);
+        setSpeaker(f?.name || t("friend"));
+      },
+      onBlocked: setBlocked,
+    });
+  }, [friendKey, user.uid]);
 
   // Çevrimiçi / odada durumu: düzenli kalp atışı
   useEffect(() => {
@@ -444,6 +461,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const longFired = useRef(false);
   const [locked, setLocked] = useState(false);
   const liveRef = useRef(null);
+  const relayRef = useRef(null);
   const statusRef = useRef("offline");
 
   // Arkadaşın çevrimiçi / odada durumu
@@ -624,7 +642,10 @@ function Chat({ me, friend, onBack, onRead }) {
         stream.getTracks().forEach((tr) => tr.stop());
         const lv = liveRef.current;
         liveRef.current = null;
-        const wasLive = !!lv?.heard; // karşı taraf sesi gerçekten çaldı mı
+        const rl = relayRef.current;
+        relayRef.current = null;
+        rl?.stop();
+        const wasLive = !!lv?.heard || (rl?.sent || 0) > 0; // sesi karşı taraf çaldı ya da yedek yolla gitti
         if (Date.now() - startedAt.current >= 500) {
           const why = wasLive ? "diagLive" : !lv ? (statusRef.current === "offline" ? "diagOffline" : "diagNoStart")
             : !lv.answered ? "diagNoAnswer" : lv.state !== "connected" ? "diagNoConnect" : "diagNotHeard";
@@ -641,7 +662,14 @@ function Chat({ me, friend, onBack, onRead }) {
       mr.start();
       setRec(true);
       limitTimer.current = setTimeout(stopRec, lock ? 220000 : 60000);
-      // Arkadaş çevrimiçiyse sesi canlı yolla
+      // Arkadaş çevrimiçiyse sesi canlı yolla; doğrudan bağlantı 2 sn içinde kurulmazsa yedek yola geç
+      if (statusRef.current !== "offline") {
+        setTimeout(() => {
+          if (recorder.current === mr && mr.state === "recording" && !liveRef.current?.connected && !relayRef.current) {
+            relayRef.current = startRelay({ chatId, from: me.uid, stream });
+          }
+        }, 1500);
+      }
       if (liveSupported() && statusRef.current !== "offline") {
         startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
           .then((lv) => {
