@@ -520,3 +520,15 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .older-btn { align-self: center; margin: 4px 0 10px; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); }
 .msg.me .wave i { background: color-mix(in srgb, var(--accent) 45%, transparent); }
 .msg.me .wave i.on { background: var(--accent); }
+
+/* v3.8 telsiz tuşları: sol-sağ yerleşim, seçilmeyen yazı, kaymayan dokunuş */
+.ptt-wrap, .ptt-wrap * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+.ptt, .lock-btn { touch-action: none; }
+.ptt-wrap { padding-top: 6px; gap: 6px; }
+.ptt-row { width: 100%; max-width: 360px; justify-content: space-between; gap: 0; padding: 4px 18px 0; align-items: flex-end; }
+.ptt-slot { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 112px; }
+.ptt-cap { font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.2; }
+.ptt { width: 96px; height: 96px; box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,.35); }
+.lock-btn { width: 68px; height: 68px; margin-bottom: 14px; box-shadow: 0 6px 16px rgba(0,0,0,.08); }
+.lock-btn:active { transform: scale(.92); }
+.ptt-wrap .hint { max-width: 300px; }

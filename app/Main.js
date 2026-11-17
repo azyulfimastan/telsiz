@@ -809,27 +809,33 @@ function Chat({ me, friend, onBack, onRead }) {
         </form>
         <div className="ptt-wrap">
           <div className="ptt-row">
-            <button
-              type="button"
-              className={"ptt" + (rec && !locked ? " rec" : "")}
-              onPointerDown={(e) => startRec(e, false)}
-              onContextMenu={(e) => e.preventDefault()}
-              aria-label={t("holdToTalk")}
-              title={t("holdToTalk")}
-            >
-              <Icon name="mic" size={32} />
-            </button>
-            <button
-              type="button"
-              className={"lock-btn" + (locked ? " on" : "")}
-              onClick={(e) => (locked ? stopRec() : startRec(e, true))}
-              aria-label={locked ? t("stopLock") : t("lockTalk")}
-              title={locked ? t("stopLock") : t("lockTalk")}
-            >
-              <Icon name={locked ? "stop" : "lock"} size={22} />
-            </button>
+            <div className="ptt-slot">
+              <button
+                type="button"
+                className={"ptt" + (rec && !locked ? " rec" : "")}
+                onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, false); }}
+                onContextMenu={(e) => e.preventDefault()}
+                aria-label={t("holdToTalk")}
+                title={t("holdToTalk")}
+              >
+                <Icon name="mic" size={36} />
+              </button>
+              <span className="ptt-cap">{t("holdToTalk")}</span>
+            </div>
+            <div className="ptt-slot">
+              <button
+                type="button"
+                className={"lock-btn" + (locked ? " on" : "")}
+                onClick={(e) => (locked ? stopRec() : startRec(e, true))}
+                onContextMenu={(e) => e.preventDefault()}
+                aria-label={locked ? t("stopLock") : t("lockTalk")}
+                title={locked ? t("stopLock") : t("lockTalk")}
+              >
+                <Icon name={locked ? "stop" : "lock"} size={26} />
+              </button>
+              <span className="ptt-cap">{locked ? t("stopLock") : t("lockTalk")}</span>
+            </div>
           </div>
-          {!rec && <p className="hint">{t("hint")}</p>}
           {rec && locked && <p className="hint">{t("lockedHint")}</p>}
           {!rec && diag && <p className={"hint diag " + (diag === "diagLive" ? "ok" : "warn")}>{t(diag)}</p>}
         </div>
