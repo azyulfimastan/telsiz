@@ -545,3 +545,10 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .ptt { width: 92px; height: 92px; }
 .ptt-cap { font-size: 13px; font-weight: 600; color: var(--muted); text-align: center; margin: 0; }
 .chat-head .status { white-space: nowrap; }
+
+/* v3.10 kaydırarak kilit */
+.lock-hint { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line); transition: opacity .15s, background .2s, color .2s; }
+.lock-hint.show { animation: lockNudge 1.2s ease-in-out infinite; }
+.lock-hint.done { background: var(--danger); color: #fff; border: 1px solid var(--danger); }
+@keyframes lockNudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+.ptt { transition: transform .08s linear, background .12s ease; }

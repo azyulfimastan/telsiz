@@ -459,6 +459,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const longFired = useRef(false);
   const [locked, setLocked] = useState(false);
   const liveRef = useRef(null);
+  const [drag, setDrag] = useState(0);
   const relayRef = useRef(null);
   const relayWatch = useRef(null);
   const statusRef = useRef("offline");
@@ -618,10 +619,29 @@ function Chat({ me, friend, onBack, onRead }) {
     setLocked(lock);
     if (!lock) {
       // Bırakma olayı nerede olursa olsun yakala (parmak düğmenin dışına kaysa bile)
+      const x0 = e.clientX;
+      const move = (ev) => {
+        if (lockedRef.current) return;
+        const p = Math.max(0, Math.min(1, (ev.clientX - x0) / 90));
+        setDrag(p);
+        if (p >= 1) { // sağa kaydırıldı: kilitle
+          lockedRef.current = true;
+          setLocked(true);
+          setDrag(0);
+          try { navigator.vibrate?.(30); } catch {}
+          if (recorder.current?.state === "recording") {
+            clearTimeout(limitTimer.current);
+            limitTimer.current = setTimeout(stopRec, 220000);
+          }
+        }
+      };
+      window.addEventListener("pointermove", move);
       const release = () => {
         ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"].forEach((ev) =>
           window.removeEventListener(ev, release)
         );
+        window.removeEventListener("pointermove", move);
+        setDrag(0);
         if (!lockedRef.current) stopRec();
       };
       ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"].forEach((ev) =>
@@ -665,7 +685,7 @@ function Chat({ me, friend, onBack, onRead }) {
       startedAt.current = Date.now();
       mr.start();
       setRec(true);
-      limitTimer.current = setTimeout(stopRec, lock ? 220000 : 60000);
+      limitTimer.current = setTimeout(stopRec, lockedRef.current ? 220000 : 60000);
       // Ses hemen yedek yoldan akmaya başlar (ilk saniye kaybolmaz). Doğrudan bağlantı kurulup
       // karşı taraf sesi duymaya başlarsa yedek yol kapanır.
       if (statusRef.current !== "offline") {
@@ -812,28 +832,23 @@ function Chat({ me, friend, onBack, onRead }) {
             <span className="ptt-side" aria-hidden="true" />
             <button
               type="button"
-              className={"ptt" + (rec && !locked ? " rec" : "")}
+              className={"ptt" + (rec ? " rec" : "")}
+              style={drag ? { transform: `translateX(${drag * 38}px)` } : undefined}
               onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, false); }}
               onContextMenu={(e) => e.preventDefault()}
-              aria-label={t("holdToTalk")}
-              title={t("holdToTalk")}
+              aria-label={locked ? t("stopLock") : t("holdToTalk")}
+              title={locked ? t("stopLock") : t("holdToTalk")}
             >
-              <Icon name="mic" size={38} />
+              <Icon name={locked ? "stop" : "mic"} size={38} />
             </button>
-            <span className="ptt-side">
-              <button
-                type="button"
-                className={"lock-btn" + (locked ? " on" : "")}
-                onClick={(e) => (locked ? stopRec() : startRec(e, true))}
-                onContextMenu={(e) => e.preventDefault()}
-                aria-label={locked ? t("stopLock") : t("lockTalk")}
-                title={locked ? t("stopLock") : t("lockTalk")}
-              >
-                <Icon name={locked ? "stop" : "lock"} size={22} />
-              </button>
+            <span className="ptt-side" aria-hidden="true">
+              <span className={"lock-hint" + (rec && !locked ? " show" : "") + (locked ? " done" : "")} style={{ opacity: locked ? 1 : 0.35 + drag * 0.65, transform: `scale(${1 + drag * 0.35})` }}>
+                <Icon name="lock" size={22} />
+              </span>
             </span>
           </div>
           {!rec && <p className="ptt-cap">{t("holdToTalk")}</p>}
+          {rec && !locked && <p className="ptt-cap">{t("slideLock")}</p>}
           {rec && locked && <p className="hint">{t("lockedHint")}</p>}
           {!rec && diag && <p className={"hint diag " + (diag === "diagLive" ? "ok" : "warn")}>{t(diag)}</p>}
         </div>
