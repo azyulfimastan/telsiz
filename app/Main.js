@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
-import { listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
+import { getAudioCtx, listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
 import { Credit, Avatar, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceMsg } from "./ui";
@@ -65,8 +65,7 @@ export default function Main({ user, onLogout }) {
     };
     const unlock = () => {
       try {
-        if (!ctxRef.current) ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        ctxRef.current.resume();
+        ctxRef.current = getAudioCtx();
       } catch {}
       el.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
       el.play().catch(() => {}).finally(() => { el.removeAttribute("src"); el.load(); });
@@ -119,11 +118,10 @@ export default function Main({ user, onLogout }) {
 
   // Yedek yol: doğrudan bağlantı kurulamazsa gelen ses parçalarını Firestore'dan çal
   useEffect(() => {
-    if (!liveAudio.current || !friendKey) return;
+    if (!friendKey) return;
     return listenRelay({
       uid: user.uid,
       chatIds: friendKey.split(",").map((u) => chatIdOf(user.uid, u)),
-      audio: liveAudio.current,
       onSpeaking: (from) => {
         document.body.classList.toggle("listening", !!from);
         if (!from) return setSpeaker(null);
@@ -399,7 +397,7 @@ export default function Main({ user, onLogout }) {
       {blocked && (
         <button
           className="live-banner tap"
-          onClick={() => liveAudio.current?.play().then(() => setBlocked(false)).catch(() => {})}
+          onClick={() => { getAudioCtx(); setBlocked(false); liveAudio.current?.play().catch(() => {}); }}
         >
           <Icon name="mic" size={18} /> {t("tapSound")}
         </button>
@@ -462,6 +460,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const [locked, setLocked] = useState(false);
   const liveRef = useRef(null);
   const relayRef = useRef(null);
+  const relayWatch = useRef(null);
   const statusRef = useRef("offline");
 
   // Arkadaşın çevrimiçi / odada durumu
@@ -610,6 +609,7 @@ function Chat({ me, friend, onBack, onRead }) {
 
   async function startRec(e, lock = false) {
     e.preventDefault();
+    getAudioCtx(); // ses motorunu dokunuş anında aç (iPhone şartı)
     if (lockedRef.current) return stopRec(); // kilitliyken dokununca bitir
     if (recorder.current?.state === "recording") return;
     setErr("");
@@ -644,15 +644,19 @@ function Chat({ me, friend, onBack, onRead }) {
         liveRef.current = null;
         const rl = relayRef.current;
         relayRef.current = null;
+        clearInterval(relayWatch.current);
         rl?.stop();
-        const wasLive = !!lv?.heard || (rl?.sent || 0) > 0; // sesi karşı taraf çaldı ya da yedek yolla gitti
-        if (Date.now() - startedAt.current >= 500) {
-          const why = wasLive ? "diagLive" : !lv ? (statusRef.current === "offline" ? "diagOffline" : "diagNoStart")
-            : !lv.answered ? "diagNoAnswer" : lv.state !== "connected" ? "diagNoConnect" : "diagNotHeard";
-          setDiag(why);
-          setTimeout(() => setDiag(""), 9000);
-        }
+        const heardLive = !!lv?.heard;
         lv?.stop();
+        if (Date.now() - startedAt.current >= 500) {
+          // Son paketlerin ulaşması için kısa bekle, sonra sonucu göster
+          setTimeout(() => {
+            const ok = heardLive || (rl?.delivered || 0) > 0;
+            const why = ok ? "diagLive" : statusRef.current === "offline" ? "diagOffline" : "diagNoAnswer";
+            setDiag(why);
+            setTimeout(() => setDiag(""), 6000);
+          }, 1500);
+        }
         setLiveState("");
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
         // Sesli mesaj gönderimi kapalı: telsiz yalnızca canlı iletilir, kayıt saklanmaz
@@ -662,22 +666,21 @@ function Chat({ me, friend, onBack, onRead }) {
       mr.start();
       setRec(true);
       limitTimer.current = setTimeout(stopRec, lock ? 220000 : 60000);
-      // Arkadaş çevrimiçiyse sesi canlı yolla; doğrudan bağlantı 2 sn içinde kurulmazsa yedek yola geç
+      // Ses hemen yedek yoldan akmaya başlar (ilk saniye kaybolmaz). Doğrudan bağlantı kurulup
+      // karşı taraf sesi duymaya başlarsa yedek yol kapanır.
       if (statusRef.current !== "offline") {
-        setTimeout(() => {
-          if (recorder.current === mr && mr.state === "recording" && !liveRef.current?.connected && !relayRef.current) {
-            // Tekrarı önlemek için doğrudan bağlantıyı kapat: ses yalnızca yedek yoldan gider
-            const l = liveRef.current;
-            liveRef.current = null;
-            l?.stop();
-            relayRef.current = startRelay({ chatId, from: me.uid, stream });
-          }
-        }, 1500);
+        relayRef.current = startRelay({ chatId, from: me.uid, stream });
+        clearInterval(relayWatch.current);
+        relayWatch.current = setInterval(() => {
+          const r = relayRef.current;
+          if (r && liveRef.current?.heard) { r.stop(); relayRef.current = null; clearInterval(relayWatch.current); }
+          if (r && r.delivered > 0) setLiveState("live");
+        }, 300);
       }
       if (liveSupported() && statusRef.current !== "offline") {
         startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
           .then((lv) => {
-            if (recorder.current !== mr || mr.state !== "recording" || relayRef.current) lv.stop();
+            if (recorder.current !== mr || mr.state !== "recording") lv.stop();
             else liveRef.current = lv;
           })
           .catch(() => setLiveState(""));
