@@ -461,6 +461,32 @@ function Chat({ me, friend, onBack, onRead }) {
   const liveRef = useRef(null);
   const [drag, setDrag] = useState(0);
   const [arming, setArming] = useState(false);
+  const micRef = useRef(null);
+  const micTimer = useRef(null);
+  const gumBusy = useRef(false);
+  // Mikrofonu her basışta yeniden isteme (iPhone takılıyor): bir kez al, 40 sn kullanılmazsa bırak
+  async function getMic() {
+    clearTimeout(micTimer.current);
+    const cur = micRef.current;
+    if (cur && cur.getAudioTracks().some((tr) => tr.readyState === "live")) return cur;
+    let late = false;
+    const st = await Promise.race([
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((x) => {
+        if (late) { x.getTracks().forEach((tr) => tr.stop()); return null; }
+        return x;
+      }),
+      new Promise((_, rej) => setTimeout(() => { late = true; rej(Object.assign(new Error("timeout"), { name: "Timeout" })); }, 6000)),
+    ]);
+    micRef.current = st;
+    return st;
+  }
+  const dropMicLater = () => {
+    clearTimeout(micTimer.current);
+    micTimer.current = setTimeout(() => {
+      micRef.current?.getTracks().forEach((tr) => tr.stop());
+      micRef.current = null;
+    }, 40000);
+  };
   const relayRef = useRef(null);
   const relayWatch = useRef(null);
   const statusRef = useRef("offline");
@@ -650,19 +676,22 @@ function Chat({ me, friend, onBack, onRead }) {
       );
     }
     setLiveState("");
+    if (gumBusy.current) return; // mikrofon isteği sürerken yeni istek açma
+    gumBusy.current = true;
     setArming(true); // dokunuş anında görsel tepki: mikrofon hazırlanırken de tuş canlı görünsün
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await getMic();
+      gumBusy.current = false;
       setArming(false);
       if (!pressed.current) { // izin penceresi sırasında bırakıldı
-        stream.getTracks().forEach((tr) => tr.stop());
+        dropMicLater();
         return;
       }
       const mr = new MediaRecorder(stream, { audioBitsPerSecond: 24000 });
       chunks.current = [];
       mr.ondataavailable = (ev) => ev.data.size && chunks.current.push(ev.data);
       mr.onstop = async () => {
-        stream.getTracks().forEach((tr) => tr.stop());
+        dropMicLater();
         const lv = liveRef.current;
         liveRef.current = null;
         const rl = relayRef.current;
@@ -709,9 +738,10 @@ function Chat({ me, friend, onBack, onRead }) {
           .catch(() => setLiveState(""));
       }
     } catch (er) {
+      gumBusy.current = false;
       setArming(false);
       stopRec();
-      setErr(t("micNeeded") + (er?.name ? " (" + er.name + ")" : ""));
+      setErr(er?.name === "Timeout" ? t("micStuck") : t("micNeeded") + (er?.name ? " (" + er.name + ")" : ""));
     }
   }
 
