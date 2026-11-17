@@ -634,24 +634,7 @@ function Chat({ me, friend, onBack, onRead }) {
         lv?.stop();
         setLiveState("");
         if (Date.now() - startedAt.current < 500) return; // yanlışlıkla dokunma
-        if (wasLive) return; // canlı yayınlandı: kayıt gönderme, telsiz gibi
-        const blob = new Blob(chunks.current, { type: mr.mimeType });
-        if (blob.size > 700_000) return setErr(t("tooLong"));
-        const audio = await new Promise((res) => {
-          const fr = new FileReader();
-          fr.onload = () => res(fr.result);
-          fr.readAsDataURL(blob);
-        });
-        try {
-          const mref = doc(collection(db, "chats", chatId, "messages"));
-          await setDoc(doc(db, "chats", chatId, "audio", mref.id), { from: me.uid, data: audio, createdAt: serverTimestamp() });
-          await setDoc(mref, {
-            from: me.uid, type: "voice", hasAudio: true, dur: Math.round((Date.now() - startedAt.current) / 100) / 10, createdAt: serverTimestamp(),
-          });
-          afterSend("voice");
-        } catch (er) {
-          setErr(t("voiceFail", { e: er.code || er.message }));
-        }
+        // Sesli mesaj gönderimi kapalı: telsiz yalnızca canlı iletilir, kayıt saklanmaz
       };
       recorder.current = mr;
       startedAt.current = Date.now();
