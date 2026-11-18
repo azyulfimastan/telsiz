@@ -754,8 +754,8 @@ function Chat({ me, friend, onBack, onRead }) {
       mr.start();
       setRec(true);
       limitTimer.current = setTimeout(stopRec, lockedRef.current ? 220000 : 60000);
-      // Arkadaş çevrimdışıysa (uygulama kapalı) ona bildirim gönder; 30 sn içinde tekrar gönderme
-      if (statusRef.current === "offline" && Date.now() - (lastPing.current || 0) > 30000) {
+      // Arkadaşa her zaman bildirim gönder (durum bilgisi yanıltıcı olabilir, uygulama arka planda/kapalı olabilir); 30 sn içinde tekrar gönderme
+      if (Date.now() - (lastPing.current || 0) > 30000) {
         lastPing.current = Date.now();
         notifyUser(friend.uid, me.displayName || "Telsiz", t("wantsTalk"));
       }
