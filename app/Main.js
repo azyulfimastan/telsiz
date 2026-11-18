@@ -299,8 +299,6 @@ export default function Main({ user, onLogout }) {
         </header>
 
         {tab === "chats" ? (<>
-        <div className="credit-top"><p className="credit-card"><Logo size={22} /> <Credit /></p></div>
-
         <div className="list">
           {notif === "unsupported" && (
             <p className="empty">{t("iosHint")}</p>
@@ -359,6 +357,7 @@ export default function Main({ user, onLogout }) {
           ))}
         </div>
 
+        <div className="credit-bottom"><p className="credit-card"><Logo size={22} /> <Credit /></p></div>
         </>) : (
         <div className="list settings-tab">
           <section className="set-card">

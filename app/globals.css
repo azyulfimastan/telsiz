@@ -591,3 +591,4 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .sw.on { background: var(--accent); }
 .sw.on i { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) { .sw, .sw i { transition: none; } }
+.credit-bottom { flex-shrink: 0; display: flex; justify-content: center; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
