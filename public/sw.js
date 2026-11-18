@@ -4,6 +4,12 @@ self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", (event) => {
   let d = { title: "Telsiz", body: "Yeni mesaj" };
   try { d = event.data.json(); } catch {}
+  // Metin her dilde gelir; cihazın diline göre seç (eski biçim düz metindir)
+  try {
+    const m = JSON.parse(d.body);
+    const lg = (self.navigator.language || "en").slice(0, 2).toLowerCase();
+    d.body = m[lg] || m.en || m.tr || "";
+  } catch {}
   event.waitUntil(
     (async () => {
       // Uygulama ekrandayken bildirim gösterme. iPhone her push için bildirim gösterilmesini şart koştuğundan,
