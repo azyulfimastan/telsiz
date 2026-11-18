@@ -290,12 +290,17 @@ export default function Main({ user, onLogout }) {
               <Icon name="bellOff" />
             </span>
           )}
+          <button className={"icon-btn" + (tab === "settings" ? " accent" : "")} onClick={() => setTab(tab === "settings" ? "chats" : "settings")} aria-label={t("settings")} title={t("settings")}>
+            <Icon name={tab === "settings" ? "back" : "gear"} />
+          </button>
           <button className="icon-btn" onClick={onLogout} aria-label={t("logout")} title={t("logout")}>
             <Icon name="logout" />
           </button>
         </header>
 
         {tab === "chats" ? (<>
+        <div className="credit-top"><p className="credit-card"><Logo size={22} /> <Credit /></p></div>
+
         <div className="list">
           {notif === "unsupported" && (
             <p className="empty">{t("iosHint")}</p>
@@ -356,37 +361,42 @@ export default function Main({ user, onLogout }) {
 
         </>) : (
         <div className="list settings-tab">
-          <div className="set-card">
-            <div className="set-title">{t("setFriends")}</div>
-            <form className="add-form" onSubmit={sendRequest}>
-              <input className="field" type="email" placeholder={t("gmail")} value={email} onChange={(e) => setEmail(e.target.value)} />
-              <button className="btn-sm" type="submit">{t("add")}</button>
-            </form>
-            {info && <p className="info" role="status">{info}</p>}
-          </div>
-          <div className="set-card">
-            <div className="set-title">{t("setLook")}</div>
-            <div className="add-row"><LangSwitch /></div>
-            <div className="theme-row"><ThemeSwitch /><ModeSwitch /></div>
-          </div>
-          <div className="set-card">
-            <div className="set-title">{t("setVoice")}</div>
-            <FastSwitch />
+          <section className="set-card">
+            <h3 className="set-title">{t("setFriends")}</h3>
+            <div className="set-row col">
+              <span className="set-label">{t("setAdd")}</span>
+              <form className="add-form" onSubmit={sendRequest}>
+                <input className="field" type="email" placeholder={t("gmail")} value={email} onChange={(e) => setEmail(e.target.value)} />
+                <button className="btn-sm" type="submit">{t("add")}</button>
+              </form>
+              {info && <p className="info" role="status">{info}</p>}
+            </div>
+          </section>
+          <section className="set-card">
+            <h3 className="set-title">{t("setLook")}</h3>
+            <div className="set-row"><span className="set-label">{t("setLang")}</span><LangSwitch /></div>
+            <div className="set-row"><span className="set-label">{t("setColor")}</span><ThemeSwitch /></div>
+            <div className="set-row"><span className="set-label">{t("setMode")}</span><ModeSwitch /></div>
+          </section>
+          <section className="set-card">
+            <h3 className="set-title">{t("setVoice")}</h3>
+            <div className="set-row"><span className="set-label">{t("setTurn")}</span><FastSwitch /></div>
             <p className="set-hint">{t("turnHint")}</p>
-            <button className="btn-sm ghost fast-sw" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button>
-          </div>
-          <p className="credit-card"><Logo size={22} /> <Credit /></p>
+            <div className="set-row"><span className="set-label">{t("setTest")}</span><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div>
+          </section>
+          {notif !== "unsupported" && (
+            <section className="set-card">
+              <h3 className="set-title">{t("setNotif")}</h3>
+              <div className="set-row">
+                <span className="set-label">{t("setNotif")}</span>
+                {notif === "default" && <button className="btn-sm" onClick={turnOnNotif}>{t("notifOn")}</button>}
+                {notif === "granted" && <span className="set-val">✓</span>}
+                {notif === "denied" && <span className="set-val muted">{t("notifBlocked")}</span>}
+              </div>
+            </section>
+          )}
         </div>
         )}
-
-        <nav className="tabbar" aria-label="Telsiz">
-          <button type="button" className={"tab" + (tab === "chats" ? " on" : "")} onClick={() => setTab("chats")} aria-current={tab === "chats"}>
-            <span className="tab-ic"><Icon name="chats" size={22} />{incoming.length > 0 && <i className="tab-dot" />}</span>{t("chats")}
-          </button>
-          <button type="button" className={"tab" + (tab === "settings" ? " on" : "")} onClick={() => setTab("settings")} aria-current={tab === "settings"}>
-            <span className="tab-ic"><Icon name="gear" size={22} /></span>{t("settings")}
-          </button>
-        </nav>
       </aside>
 
       {diagOpen && <Diag uid={user.uid} onClose={() => setDiagOpen(false)} />}

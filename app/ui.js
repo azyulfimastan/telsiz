@@ -422,7 +422,6 @@ export function Splash() {
 }
 
 export function FastSwitch() {
-  const { t } = useI18n();
   const [on, setOn] = useState(false);
   useEffect(() => { try { setOn(localStorage.getItem("fast") === "1"); } catch {} }, []);
   const flip = () => {
@@ -431,8 +430,6 @@ export function FastSwitch() {
     try { localStorage.setItem("fast", n ? "1" : "0"); } catch {}
   };
   return (
-    <button type="button" className={"btn-sm ghost fast-sw" + (on ? " on" : "")} onClick={flip} aria-pressed={on}>
-      {t("fastMode")}: {on ? t("on") : t("off")}
-    </button>
+    <button type="button" role="switch" aria-checked={on} className={"sw" + (on ? " on" : "")} onClick={flip}><i /></button>
   );
 }
