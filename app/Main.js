@@ -8,7 +8,7 @@ import { db } from "@/lib/firebase";
 import { APP_VERSION } from "@/lib/version";
 import { disablePush, enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { getAudioCtx, listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
-import { allLangs, useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
 import { Credit, Avatar, FastSwitch, Icon, LangSwitch, Logo, ModeSwitch, Switch, ThemeSwitch, VoiceMsg } from "./ui";
 
@@ -171,6 +171,11 @@ export default function Main({ user, onLogout }) {
       window.removeEventListener("pagehide", leave);
     };
   }, [active, user.uid]);
+
+  // Kendi dilini kaydet: arkadaşların sana bildirimi senin dilinde göndersin
+  useEffect(() => {
+    setDoc(doc(db, "users", user.uid), { lang: locale }, { merge: true }).catch(() => {});
+  }, [user.uid, locale]);
 
   const [pushOff, setPushOff] = useState(false);
   const [micOff, setMicOff] = useState(false);
@@ -711,7 +716,7 @@ function Chat({ me, friend, onBack, onRead }) {
     await updateDoc(doc(db, "chats", chatId), {
       lastAt: serverTimestamp(), lastFrom: me.uid, lastKind: kind, ["unread_" + friend.uid]: increment(1),
     });
-    if (!quiet) notifyUser(friend.uid, me.displayName || "Telsiz", allLangs(kind === "voice" ? "voiceMsg" : "newMessage"));
+    if (!quiet) notifyUser(friend.uid, me.displayName || "Telsiz", kind === "voice" ? "voiceMsg" : "newMessage");
   }
 
   async function sendText(e) {
@@ -818,7 +823,7 @@ function Chat({ me, friend, onBack, onRead }) {
       // Arkadaşa her zaman bildirim gönder (durum bilgisi yanıltıcı olabilir, uygulama arka planda/kapalı olabilir); 30 sn içinde tekrar gönderme
       if (Date.now() - (lastPing.current || 0) > 30000) {
         lastPing.current = Date.now();
-        notifyUser(friend.uid, me.displayName || "Telsiz", allLangs("wantsTalk"));
+        notifyUser(friend.uid, me.displayName || "Telsiz", "wantsTalk");
       }
       const startFallback = () => {
         relayRef.current = startRelay({ chatId, from: me.uid, stream });
