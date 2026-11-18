@@ -558,3 +558,5 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .meter { display: inline-flex; align-items: flex-end; gap: 3px; height: 20px; margin: 0 8px; }
 .meter i { width: 4px; border-radius: 2px; background: var(--line); transition: background .08s; }
 .meter i.on { background: var(--accent); }
+.fast-sw { width: 100%; margin-top: 8px; }
+.fast-sw.on { background: var(--accent); color: #fff; border-color: var(--accent); }

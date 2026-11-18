@@ -9,7 +9,7 @@ import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { getAudioCtx, listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
-import { Credit, Avatar, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceMsg } from "./ui";
+import { Credit, Avatar, FastSwitch, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -386,6 +386,7 @@ export default function Main({ user, onLogout }) {
               <div className="set-panel">
                 <div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div>
                 <div className="theme-row"><ThemeSwitch /><ModeSwitch /></div>
+                <FastSwitch />
               </div>
             )}
           </div>
@@ -721,7 +722,16 @@ function Chat({ me, friend, onBack, onRead }) {
       limitTimer.current = setTimeout(stopRec, lockedRef.current ? 220000 : 60000);
       // Ses hemen yedek yoldan akmaya başlar (ilk saniye kaybolmaz). Doğrudan bağlantı kurulup
       // karşı taraf sesi duymaya başlarsa yedek yol kapanır.
-      {
+      const fast = liveSupported() && localStorage.getItem("fast") === "1";
+      if (fast) {
+        // Hızlı mod (deneysel): ses doğrudan bağlantıyla gider, yedek yol kullanılmaz
+        startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
+          .then((lv) => {
+            if (recorder.current !== mr || mr.state !== "recording") lv.stop();
+            else liveRef.current = lv;
+          })
+          .catch(() => setLiveState(""));
+      } else {
         relayRef.current = startRelay({ chatId, from: me.uid, stream });
         clearInterval(relayWatch.current);
         relayWatch.current = setInterval(() => {
