@@ -461,6 +461,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const liveRef = useRef(null);
   const [drag, setDrag] = useState(0);
   const [arming, setArming] = useState(false);
+  const [lvl, setLvl] = useState(0);
   const micRef = useRef(null);
   const micTimer = useRef(null);
   const gumBusy = useRef(false);
@@ -725,6 +726,7 @@ function Chat({ me, friend, onBack, onRead }) {
         clearInterval(relayWatch.current);
         relayWatch.current = setInterval(() => {
           const r = relayRef.current;
+          if (r) setLvl(r.level);
           if (r && r.delivered > 0) setLiveState("live");
         }, 300);
       }
@@ -836,6 +838,9 @@ function Chat({ me, friend, onBack, onRead }) {
           {rec ? (
             <div className="rec-bar" role="status">
               <span className="rec-dot" />
+              <span className="meter" aria-hidden="true">
+                {[0.12, 0.3, 0.5, 0.7].map((th, i) => <i key={i} className={lvl > th * 0.6 ? "on" : ""} style={{ height: 6 + i * 4 }} />)}
+              </span>
               <span className="rec-time">{Math.floor(sec / 60)}:{String(sec % 60).padStart(2, "0")}</span>
               <span className="muted">{recLabel}</span>
             </div>

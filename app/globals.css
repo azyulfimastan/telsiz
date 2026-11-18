@@ -553,3 +553,8 @@ html, body { max-width: 100%; overflow-x: hidden; }
 @keyframes lockNudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
 .ptt { transition: transform .08s linear, background .12s ease; }
 .ptt.arming { transform: scale(1.06); filter: brightness(1.1); animation: none; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* v3.15 mikrofon seviye göstergesi */
+.meter { display: inline-flex; align-items: flex-end; gap: 3px; height: 20px; margin: 0 8px; }
+.meter i { width: 4px; border-radius: 2px; background: var(--line); transition: background .08s; }
+.meter i.on { background: var(--accent); }
