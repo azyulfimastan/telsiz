@@ -5,6 +5,7 @@ import {
   serverTimestamp, setDoc, updateDoc, where, limit, increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { APP_VERSION } from "@/lib/version";
 import { enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { getAudioCtx, listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
@@ -279,7 +280,7 @@ export default function Main({ user, onLogout }) {
       <aside className="side">
         <header className="side-head">
           <Avatar name={user.displayName || user.email} photo={user.photoURL} size={36} />
-          <span className="who">{user.displayName || user.email}</span>
+          <span className="who">{user.displayName || user.email}<small className="who-ver">Telsiz v{APP_VERSION}</small></span>
           {notif === "default" && (
             <button className="icon-btn accent" onClick={turnOnNotif} aria-label={t("notifOn")} title={t("notifOn")}>
               <Icon name="bell" />

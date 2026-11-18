@@ -597,3 +597,6 @@ html, body { max-width: 100%; overflow-x: hidden; }
 /* v3.24: kartlar kesilmesin, sürüm etiketi sağ üstten alta alındı */
 .settings-tab > * { flex-shrink: 0; }
 .ver-tag { top: auto; right: auto; left: calc(10px + env(safe-area-inset-left)); bottom: calc(4px + env(safe-area-inset-bottom)); font-size: 10px; padding: 3px 7px; opacity: .65; }
+/* v3.25: sürüm etiketi ana ekranda isminin altında (köşede içerik kapatmasın) */
+.who-ver { display: block; font-size: 11px; font-weight: 600; opacity: .8; letter-spacing: .02em; }
+body:has(.app) .ver-tag { display: none; }
