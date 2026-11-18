@@ -689,10 +689,12 @@ function Chat({ me, friend, onBack, onRead }) {
         dropMicLater();
         return;
       }
+      let fb = null, fellBack = false;
       const mr = new MediaRecorder(stream, { audioBitsPerSecond: 24000 });
       chunks.current = [];
       mr.ondataavailable = (ev) => ev.data.size && chunks.current.push(ev.data);
       mr.onstop = async () => {
+        clearTimeout(fb);
         dropMicLater();
         const lv = liveRef.current;
         liveRef.current = null;
@@ -720,18 +722,7 @@ function Chat({ me, friend, onBack, onRead }) {
       mr.start();
       setRec(true);
       limitTimer.current = setTimeout(stopRec, lockedRef.current ? 220000 : 60000);
-      // Ses hemen yedek yoldan akmaya başlar (ilk saniye kaybolmaz). Doğrudan bağlantı kurulup
-      // karşı taraf sesi duymaya başlarsa yedek yol kapanır.
-      const fast = liveSupported() && localStorage.getItem("fast") === "1";
-      if (fast) {
-        // Hızlı mod (deneysel): ses doğrudan bağlantıyla gider, yedek yol kullanılmaz
-        startLive({ from: me.uid, to: friend.uid, stream, onState: setLiveState })
-          .then((lv) => {
-            if (recorder.current !== mr || mr.state !== "recording") lv.stop();
-            else liveRef.current = lv;
-          })
-          .catch(() => setLiveState(""));
-      } else {
+      const startFallback = () => {
         relayRef.current = startRelay({ chatId, from: me.uid, stream });
         clearInterval(relayWatch.current);
         relayWatch.current = setInterval(() => {
@@ -739,8 +730,27 @@ function Chat({ me, friend, onBack, onRead }) {
           if (r) setLvl(r.level);
           if (r && r.delivered > 0) setLiveState("live");
         }, 300);
+      };
+      const fast = liveSupported() && localStorage.getItem("fast") === "1";
+      if (fast) {
+        // TURN açık: ses doğrudan bağlantıyla gider. 4 sn içinde kurulamazsa yedek yola geçer (çift ses olmasın diye doğrudan kapatılır).
+        const goFallback = () => {
+          if (fellBack || recorder.current !== mr || mr.state !== "recording") return;
+          fellBack = true;
+          liveRef.current?.stop();
+          liveRef.current = null;
+          startFallback();
+        };
+        startLive({ from: me.uid, to: friend.uid, stream, onState: (st) => (st === "failed" ? goFallback() : setLiveState(st)) })
+          .then((lv) => {
+            if (fellBack || recorder.current !== mr || mr.state !== "recording") lv.stop();
+            else liveRef.current = lv;
+          })
+          .catch(goFallback);
+        fb = setTimeout(() => { if (!liveRef.current?.connected) goFallback(); }, 4000);
+      } else {
+        startFallback();
       }
-      // Doğrudan (WebRTC) yol şimdilik kapalı: ses yalnızca yedek yoldan, konuşma boyunca kesintisiz gider.
     } catch (er) {
       gumBusy.current = false;
       setArming(false);
