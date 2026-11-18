@@ -24,14 +24,13 @@ export default function Main({ user, onLogout }) {
   const [speaker, setSpeaker] = useState(null);
   const [blocked, setBlocked] = useState(false);
   const [diagOpen, setDiagOpen] = useState(false);
-  const [setOpen, setSetOpen] = useState(false);
+  const [tab, setTab] = useState("chats");
   const [friends, setFriends] = useState([]);
   const [friendsReady, setFriendsReady] = useState(false);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
   const [email, setEmail] = useState("");
   const [info, setInfo] = useState("");
-  const [addOpen, setAddOpen] = useState(false);
   const [active, setActive] = useState(null);
   const [, setTick] = useState(0);
   const [notif, setNotif] = useState("default");
@@ -296,8 +295,7 @@ export default function Main({ user, onLogout }) {
           </button>
         </header>
 
-        <div className="credit-top"><p className="credit-card"><Logo size={22} /> <Credit /></p></div>
-
+        {tab === "chats" ? (<>
         <div className="list">
           {notif === "unsupported" && (
             <p className="empty">{t("iosHint")}</p>
@@ -356,41 +354,39 @@ export default function Main({ user, onLogout }) {
           ))}
         </div>
 
-        <div className="add">
-          {!addOpen ? (
-            <button className="add-toggle" onClick={() => setAddOpen(true)}>
-              <Icon name="userPlus" /> {t("addFriend")}
-            </button>
-          ) : (
+        </>) : (
+        <div className="list settings-tab">
+          <div className="set-card">
+            <div className="set-title">{t("setFriends")}</div>
             <form className="add-form" onSubmit={sendRequest}>
-              <button type="button" className="icon-btn" onClick={() => { setAddOpen(false); setEmail(""); }} aria-label={t("backToList")}>
-                <Icon name="back" />
-              </button>
-              <input
-                className="field"
-                type="email"
-                placeholder={t("gmail")}
-                value={email}
-                autoFocus
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <input className="field" type="email" placeholder={t("gmail")} value={email} onChange={(e) => setEmail(e.target.value)} />
               <button className="btn-sm" type="submit">{t("add")}</button>
             </form>
-          )}
-          {info && <p className="info" role="status">{info}</p>}
-          <div className="side-foot">
-            <button type="button" className={"set-toggle" + (setOpen ? " open" : "")} onClick={() => setSetOpen((v) => !v)} aria-expanded={setOpen}>
-              <Icon name="gear" size={18} /> {t("settings")}
-            </button>
-            {setOpen && (
-              <div className="set-panel">
-                <div className="add-row"><LangSwitch /><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div>
-                <div className="theme-row"><ThemeSwitch /><ModeSwitch /></div>
-                <FastSwitch />
-              </div>
-            )}
+            {info && <p className="info" role="status">{info}</p>}
           </div>
+          <div className="set-card">
+            <div className="set-title">{t("setLook")}</div>
+            <div className="add-row"><LangSwitch /></div>
+            <div className="theme-row"><ThemeSwitch /><ModeSwitch /></div>
+          </div>
+          <div className="set-card">
+            <div className="set-title">{t("setVoice")}</div>
+            <FastSwitch />
+            <p className="set-hint">{t("turnHint")}</p>
+            <button className="btn-sm ghost fast-sw" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button>
+          </div>
+          <p className="credit-card"><Logo size={22} /> <Credit /></p>
         </div>
+        )}
+
+        <nav className="tabbar" aria-label="Telsiz">
+          <button type="button" className={"tab" + (tab === "chats" ? " on" : "")} onClick={() => setTab("chats")} aria-current={tab === "chats"}>
+            <span className="tab-ic"><Icon name="chats" size={22} />{incoming.length > 0 && <i className="tab-dot" />}</span>{t("chats")}
+          </button>
+          <button type="button" className={"tab" + (tab === "settings" ? " on" : "")} onClick={() => setTab("settings")} aria-current={tab === "settings"}>
+            <span className="tab-ic"><Icon name="gear" size={22} /></span>{t("settings")}
+          </button>
+        </nav>
       </aside>
 
       {diagOpen && <Diag uid={user.uid} onClose={() => setDiagOpen(false)} />}
