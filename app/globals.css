@@ -592,3 +592,5 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .sw.on i { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) { .sw, .sw i { transition: none; } }
 .credit-bottom { flex-shrink: 0; display: flex; justify-content: center; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.set-row .set-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-row .btn-sm { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }

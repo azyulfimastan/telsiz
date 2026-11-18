@@ -293,9 +293,6 @@ export default function Main({ user, onLogout }) {
           <button className={"icon-btn" + (tab === "settings" ? " accent" : "")} onClick={() => setTab(tab === "settings" ? "chats" : "settings")} aria-label={t("settings")} title={t("settings")}>
             <Icon name={tab === "settings" ? "back" : "gear"} />
           </button>
-          <button className="icon-btn" onClick={onLogout} aria-label={t("logout")} title={t("logout")}>
-            <Icon name="logout" />
-          </button>
         </header>
 
         {tab === "chats" ? (<>
@@ -394,6 +391,13 @@ export default function Main({ user, onLogout }) {
               </div>
             </section>
           )}
+          <section className="set-card">
+            <h3 className="set-title">{t("setAccount")}</h3>
+            <div className="set-row">
+              <span className="set-label">{user.email}</span>
+              <button className="btn-sm ghost" onClick={onLogout}><Icon name="logout" size={16} /> {t("logout")}</button>
+            </div>
+          </section>
         </div>
         )}
       </aside>
