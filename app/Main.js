@@ -6,11 +6,11 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { APP_VERSION } from "@/lib/version";
-import { enablePush, notifyUser, pushSupported } from "@/lib/push";
+import { disablePush, enablePush, notifyUser, pushSupported } from "@/lib/push";
 import { getAudioCtx, listenLive, listenRelay, liveSupported, startLive, startRelay } from "@/lib/live";
 import { useI18n } from "@/lib/i18n";
 import Diag from "./Diag";
-import { Credit, Avatar, FastSwitch, Icon, LangSwitch, Logo, ModeSwitch, ThemeSwitch, VoiceMsg } from "./ui";
+import { Credit, Avatar, FastSwitch, Icon, LangSwitch, Logo, ModeSwitch, Switch, ThemeSwitch, VoiceMsg } from "./ui";
 
 const chatIdOf = (a, b) => [a, b].sort().join("_");
 
@@ -172,14 +172,60 @@ export default function Main({ user, onLogout }) {
     };
   }, [active, user.uid]);
 
+  const [pushOff, setPushOff] = useState(false);
+  const [micOff, setMicOff] = useState(false);
+  const [micPerm, setMicPerm] = useState("prompt");
+  const [permAsk, setPermAsk] = useState(false);
+
   useEffect(() => {
-    if (!pushSupported()) return setNotif("unsupported");
-    setNotif(Notification.permission);
-    if (Notification.permission === "granted") enablePush(user.uid, { ask: false }).catch(() => {});
+    let off = false, mOff = false, asked = false;
+    try { off = localStorage.getItem("pushOff") === "1"; mOff = localStorage.getItem("micOff") === "1"; asked = localStorage.getItem("permAsked") === "1"; } catch {}
+    setPushOff(off);
+    setMicOff(mOff);
+    if (!pushSupported()) setNotif("unsupported");
+    else {
+      setNotif(Notification.permission);
+      if (Notification.permission === "granted" && !off) enablePush(user.uid, { ask: false }).catch(() => {});
+    }
+    (async () => {
+      let mp = "prompt";
+      try { mp = (await navigator.permissions.query({ name: "microphone" })).state; } catch {}
+      setMicPerm(mp);
+      const needNotif = pushSupported() && Notification.permission === "default";
+      if (!asked && (needNotif || mp === "prompt")) setPermAsk(true);
+    })();
   }, [user.uid]);
 
   async function turnOnNotif() {
     try { setNotif(await enablePush(user.uid)); } catch { setNotif("denied"); }
+  }
+
+  async function allowPerms() {
+    try { localStorage.setItem("permAsked", "1"); } catch {}
+    setPermAsk(false);
+    if (pushSupported() && Notification.permission === "default") await turnOnNotif();
+    try {
+      const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+      st.getTracks().forEach((tr) => tr.stop());
+      setMicPerm("granted");
+    } catch { setMicPerm("denied"); }
+  }
+  function laterPerms() {
+    try { localStorage.setItem("permAsked", "1"); } catch {}
+    setPermAsk(false);
+  }
+  async function togglePush(v) {
+    setPushOff(!v);
+    try { localStorage.setItem("pushOff", v ? "0" : "1"); } catch {}
+    if (v) { if (Notification.permission !== "granted") await turnOnNotif(); else enablePush(user.uid, { ask: false }).catch(() => {}); }
+    else await disablePush(user.uid);
+  }
+  async function toggleMic(v) {
+    setMicOff(!v);
+    try { localStorage.setItem("micOff", v ? "0" : "1"); } catch {}
+    if (v && micPerm !== "granted") {
+      try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach((tr) => tr.stop()); setMicPerm("granted"); } catch { setMicPerm("denied"); }
+    }
   }
 
   const isUnread = (f) => f.unread > 0;
@@ -298,6 +344,16 @@ export default function Main({ user, onLogout }) {
   return (
     <div className={"app" + (active ? " inchat" : "")}>
       <audio ref={liveAudio} playsInline autoPlay style={{ display: "none" }} />
+      {permAsk && (
+        <div className="perm-back" role="dialog" aria-modal="true" aria-label={t("permTitle")}>
+          <div className="perm-box">
+            <h3>{t("permTitle")}</h3>
+            <p>{t("permText")}</p>
+            <button className="btn-sm perm-go" onClick={allowPerms}>{t("permAllow")}</button>
+            <button className="btn-sm ghost" onClick={laterPerms}>{t("permLater")}</button>
+          </div>
+        </div>
+      )}
       <aside className="side">
         <header className="side-head">
           <Avatar name={user.displayName || user.email} photo={user.photoURL} size={36} />
@@ -402,17 +458,20 @@ export default function Main({ user, onLogout }) {
             <p className="set-hint">{t("turnHint")}</p>
             <div className="set-row"><span className="set-label">{t("setTest")}</span><button className="btn-sm ghost" onClick={() => setDiagOpen(true)}>{t("diagTest")}</button></div>
           </section>
-          {notif !== "unsupported" && (
-            <section className="set-card">
-              <h3 className="set-title">{t("setNotif")}</h3>
+          <section className="set-card">
+            <h3 className="set-title">{t("setPerms")}</h3>
+            {notif !== "unsupported" && (
               <div className="set-row">
                 <span className="set-label">{t("setNotif")}</span>
-                {notif === "default" && <button className="btn-sm" onClick={turnOnNotif}>{t("notifOn")}</button>}
-                {notif === "granted" && <span className="set-val">✓</span>}
-                {notif === "denied" && <span className="set-val muted">{t("notifBlocked")}</span>}
+                <Switch on={notif === "granted" && !pushOff} onChange={togglePush} label={t("setNotif")} />
               </div>
-            </section>
-          )}
+            )}
+            <div className="set-row">
+              <span className="set-label">{t("setMic")}</span>
+              <Switch on={!micOff && micPerm !== "denied"} onChange={toggleMic} label={t("setMic")} />
+            </div>
+            {(notif === "denied" || micPerm === "denied") && <p className="set-hint">{t("permHint")}</p>}
+          </section>
           <section className="set-card">
             <h3 className="set-title">{t("setAccount")}</h3>
             <div className="set-row">
@@ -674,6 +733,7 @@ function Chat({ me, friend, onBack, onRead }) {
     getAudioCtx(); // ses motorunu dokunuş anında aç (iPhone şartı)
     if (lockedRef.current) return stopRec(); // kilitliyken dokununca bitir
     if (recorder.current?.state === "recording") return;
+    try { if (localStorage.getItem("micOff") === "1") { setErr(t("micOffMsg")); return; } } catch {}
     setErr("");
     pressed.current = true;
     lockedRef.current = lock;

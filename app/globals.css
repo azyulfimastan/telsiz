@@ -600,3 +600,9 @@ html, body { max-width: 100%; overflow-x: hidden; }
 /* v3.25: sürüm etiketi ana ekranda isminin altında (köşede içerik kapatmasın) */
 .who-ver { display: block; font-size: 11px; font-weight: 600; opacity: .8; letter-spacing: .02em; }
 body:has(.app) .ver-tag { display: none; }
+/* v3.29: izin penceresi */
+.perm-back { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 24px; background: rgba(0,0,0,.5); }
+.perm-box { width: 100%; max-width: 340px; background: var(--surface); border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+.perm-box h3 { margin: 0; font-size: 18px; }
+.perm-box p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.perm-go { padding: 12px; font-size: 15px; }

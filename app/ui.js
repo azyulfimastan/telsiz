@@ -433,3 +433,9 @@ export function FastSwitch() {
     <button type="button" role="switch" aria-checked={on} className={"sw" + (on ? " on" : "")} onClick={flip}><i /></button>
   );
 }
+
+export function Switch({ on, onChange, label }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} className={"sw" + (on ? " on" : "")} onClick={() => onChange(!on)}><i /></button>
+  );
+}
