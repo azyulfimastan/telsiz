@@ -179,7 +179,7 @@ export default function Main({ user, onLogout }) {
 
   useEffect(() => {
     let off = false, mOff = false, asked = false;
-    try { off = localStorage.getItem("pushOff") === "1"; mOff = localStorage.getItem("micOff") === "1"; asked = localStorage.getItem("permAsked") === "1"; } catch {}
+    try { off = localStorage.getItem("pushOff") === "1"; mOff = localStorage.getItem("micOff") === "1"; asked = localStorage.getItem("permOnce") === "1"; } catch {}
     setPushOff(off);
     setMicOff(mOff);
     if (!pushSupported()) setNotif("unsupported");
@@ -191,8 +191,11 @@ export default function Main({ user, onLogout }) {
       let mp = "prompt";
       try { mp = (await navigator.permissions.query({ name: "microphone" })).state; } catch {}
       setMicPerm(mp);
-      const needNotif = pushSupported() && Notification.permission === "default";
-      if (!asked && (needNotif || mp === "prompt")) setPermAsk(true);
+      if (!asked) {
+        // Bir sonraki açılışta bir kez sor; gösterilir gösterilmez işaretle, bir daha sorma
+        try { localStorage.setItem("permOnce", "1"); } catch {}
+        setPermAsk(true);
+      }
     })();
   }, [user.uid]);
 
@@ -201,7 +204,6 @@ export default function Main({ user, onLogout }) {
   }
 
   async function allowPerms() {
-    try { localStorage.setItem("permAsked", "1"); } catch {}
     setPermAsk(false);
     if (pushSupported() && Notification.permission === "default") await turnOnNotif();
     try {
@@ -211,7 +213,6 @@ export default function Main({ user, onLogout }) {
     } catch { setMicPerm("denied"); }
   }
   function laterPerms() {
-    try { localStorage.setItem("permAsked", "1"); } catch {}
     setPermAsk(false);
   }
   async function togglePush(v) {
