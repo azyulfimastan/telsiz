@@ -492,6 +492,7 @@ function Chat({ me, friend, onBack, onRead }) {
   const relayRef = useRef(null);
   const relayWatch = useRef(null);
   const statusRef = useRef("offline");
+  const lastPing = useRef(0);
 
   // Arkadaşın çevrimiçi / odada durumu
   useEffect(() => {
@@ -722,6 +723,11 @@ function Chat({ me, friend, onBack, onRead }) {
       mr.start();
       setRec(true);
       limitTimer.current = setTimeout(stopRec, lockedRef.current ? 220000 : 60000);
+      // Arkadaş çevrimdışıysa (uygulama kapalı) ona bildirim gönder; 30 sn içinde tekrar gönderme
+      if (statusRef.current === "offline" && Date.now() - (lastPing.current || 0) > 30000) {
+        lastPing.current = Date.now();
+        notifyUser(friend.uid, me.displayName || "Telsiz", t("wantsTalk"));
+      }
       const startFallback = () => {
         relayRef.current = startRelay({ chatId, from: me.uid, stream });
         clearInterval(relayWatch.current);
