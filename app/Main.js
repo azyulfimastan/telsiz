@@ -21,6 +21,27 @@ export default function Main({ user, onLogout }) {
   const activeRef = useRef(null);
   const prevChats = useRef(null);
   const ctxRef = useRef(null);
+  // Uygulama açıkken ve görünürken bildirimleri temizle
+  useEffect(() => {
+    const clear = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const reg = await navigator.serviceWorker?.getRegistration("/sw.js");
+        const list = (await reg?.getNotifications()) || [];
+        list.forEach((n) => n.close());
+      } catch {}
+      try { navigator.clearAppBadge?.(); } catch {}
+    };
+    clear();
+    document.addEventListener("visibilitychange", clear);
+    window.addEventListener("focus", clear);
+    const iv = setInterval(clear, 5000); // uygulama açıkken yeni gelen bildirimler de silinsin
+    return () => {
+      document.removeEventListener("visibilitychange", clear);
+      window.removeEventListener("focus", clear);
+      clearInterval(iv);
+    };
+  }, []);
   const [presence, setPresence] = useState({});
   const [speaker, setSpeaker] = useState(null);
   const [blocked, setBlocked] = useState(false);
