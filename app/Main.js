@@ -901,22 +901,16 @@ function Chat({ me, friend, onBack, onRead }) {
             <button
               type="button"
               className={"ptt" + (rec ? " rec" : "") + (arming && !rec ? " arming" : "")}
-              style={drag ? { transform: `translateX(${drag * 38}px)` } : undefined}
-              onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, false); }}
+              onPointerDown={(e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} startRec(e, true); }}
               onContextMenu={(e) => e.preventDefault()}
               aria-label={locked ? t("stopLock") : t("holdToTalk")}
               title={locked ? t("stopLock") : t("holdToTalk")}
             >
               <Icon name={locked ? "stop" : "mic"} size={38} />
             </button>
-            <span className="ptt-side" aria-hidden="true">
-              <span className={"lock-hint" + (rec && !locked ? " show" : "") + (locked ? " done" : "")} style={{ opacity: locked ? 1 : 0.35 + drag * 0.65, transform: `scale(${1 + drag * 0.35})` }}>
-                <Icon name="lock" size={22} />
-              </span>
-            </span>
+            <span className="ptt-side" aria-hidden="true" />
           </div>
           {!rec && <p className="ptt-cap">{arming ? t("arming") : t("holdToTalk")}</p>}
-          {rec && !locked && <p className="ptt-cap">{t("slideLock")}</p>}
           {rec && locked && <p className="hint">{t("lockedHint")}</p>}
           {!rec && diag && <p className={"hint diag " + (diag === "diagLive" ? "ok" : "warn")}>{t(diag)}</p>}
         </div>
